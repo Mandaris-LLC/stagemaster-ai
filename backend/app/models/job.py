@@ -12,7 +12,7 @@ class Job(Base):
     image_id = Column(UUID(as_uuid=True), ForeignKey("images.id"), nullable=False)
     room_type = Column(String, nullable=False)
     style_preset = Column(String, nullable=False)
-    fix_white_balance = Column(Boolean, default=True)
+    fix_white_balance = Column(Boolean, default=False)
     wall_decorations = Column(Boolean, default=True)
     include_tv = Column(Boolean, default=False)
     status = Column(String, default="queued") # queued, in_progress, completed, error

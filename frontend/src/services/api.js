@@ -20,7 +20,7 @@ export const createStagingJob = async (imageId, roomType, stylePreset, options =
         image_id: imageId,
         room_type: roomType,
         style_preset: stylePreset,
-        fix_white_balance: options.fixWhiteBalance ?? true,
+        fix_white_balance: options.fixWhiteBalance ?? false,
         wall_decorations: options.wallDecorations ?? true,
     });
     return response.data;

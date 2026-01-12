@@ -7,7 +7,7 @@ class JobBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     room_type: str
     style_preset: str
-    fix_white_balance: bool = True
+    fix_white_balance: bool = False
     wall_decorations: bool = True
     include_tv: bool = False
 

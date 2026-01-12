@@ -155,7 +155,7 @@ async def generate_staged_image_prompt(
     analysis: str,
     placement_plan: str,
     style_preset: str,
-    fix_white_balance: bool = True,
+    fix_white_balance: bool = False,
     wall_decorations: bool = True,
     include_tv: bool = False
 ) -> str:
@@ -208,7 +208,7 @@ async def generate_staged_image_prompt(
         logger.error(f"Error calling LiteLLM for generation prompt: {str(e)}")
         raise
 
-async def generate_image(prompt: str, original_image_url: str = None, fix_white_balance: bool = True) -> bytes:
+async def generate_image(prompt: str, original_image_url: str = None, fix_white_balance: bool = False) -> bytes:
     """
     Generates an image using the configured image generation model.
     Returns the raw binary content of the generated image.

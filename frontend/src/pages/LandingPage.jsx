@@ -13,7 +13,7 @@ const LandingPage = () => {
     const [file, setFile] = useState(null);
     const [roomType, setRoomType] = useState('living_room');
     const [style, setStyle] = useState('modern');
-    const [fixWhiteBalance, setFixWhiteBalance] = useState(true);
+    const [fixWhiteBalance, setFixWhiteBalance] = useState(false);
     const [wallDecorations, setWallDecorations] = useState(true);
     const [includeTV, setIncludeTV] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
