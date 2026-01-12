@@ -1,0 +1,117 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: stage-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000/api/v1
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:15-alpine
+    container_name: stage-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: stage_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: stage-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio
+    container_name: stage-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+
+  backend:
+    build: ./backend
+    container_name: stage-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/stage_db
+      - REDIS_URL=redis://redis:6379/0
+      - STORAGE_ENDPOINT=minio:9000
+      - STORAGE_ACCESS_KEY=minioadmin
+      - STORAGE_SECRET_KEY=minioadmin
+      - STORAGE_USE_SSL=false
+      - STORAGE_PUBLIC_ENDPOINT=localhost:9000
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - LITELLM_ANALYSIS_MODEL=${LITELLM_ANALYSIS_MODEL:-openrouter/google/gemini-2.0-flash-exp:free}
+      - LITELLM_GENERATION_MODEL=${LITELLM_GENERATION_MODEL:-openrouter/google/gemini-2.0-flash-exp:free}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  worker:
+    build: ./backend
+    container_name: stage-worker
+    command: rq worker staging --url redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/stage_db
+      - REDIS_URL=redis://redis:6379/0
+      - STORAGE_ENDPOINT=minio:9000
+      - STORAGE_ACCESS_KEY=minioadmin
+      - STORAGE_SECRET_KEY=minioadmin
+      - STORAGE_USE_SSL=false
+      - STORAGE_PUBLIC_ENDPOINT=localhost:9000
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - LITELLM_ANALYSIS_MODEL=${LITELLM_ANALYSIS_MODEL:-openrouter/google/gemini-2.0-flash-exp:free}
+      - LITELLM_GENERATION_MODEL=${LITELLM_GENERATION_MODEL:-openrouter/google/gemini-2.0-flash-exp:free}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+
+volumes:
+  postgres_data:
+  minio_data:
