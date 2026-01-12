@@ -15,7 +15,10 @@ const LandingPage = () => {
     const [style, setStyle] = useState('modern');
     const [fixWhiteBalance, setFixWhiteBalance] = useState(true);
     const [wallDecorations, setWallDecorations] = useState(true);
+    const [includeTV, setIncludeTV] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+
+    const isTVDisabled = roomType === 'bathroom' || roomType === 'kitchen';
 
     const handleStartStaging = async () => {
         if (!file) return;
@@ -25,7 +28,8 @@ const LandingPage = () => {
             const imageData = await uploadImage(file);
             const jobData = await createStagingJob(imageData.id, roomType, style, {
                 fixWhiteBalance,
-                wallDecorations
+                wallDecorations,
+                includeTV: !isTVDisabled && includeTV
             });
             navigate(`/job/${jobData.id}`);
         } catch (error) {
@@ -143,6 +147,23 @@ const LandingPage = () => {
                                             </svg>
                                         </div>
                                         <span className="text-on-surface font-medium group-hover:text-primary transition-colors">Wall Decorations</span>
+                                    </label>
+
+                                    <label className={`flex items-center gap-3 group ${isTVDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
+                                        <div className="relative flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                checked={!isTVDisabled && includeTV}
+                                                onChange={(e) => setIncludeTV(e.target.checked)}
+                                                disabled={isTVDisabled}
+                                                className="peer sr-only"
+                                            />
+                                            <div className={`w-5 h-5 border-2 rounded transition-all ${isTVDisabled ? 'border-outline-variant bg-surface-container' : 'border-outline peer-checked:bg-primary peer-checked:border-primary'}`} />
+                                            <svg className="absolute w-3.5 h-3.5 text-white left-[3px] opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+                                                <path d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                        <span className={`font-medium transition-colors ${isTVDisabled ? 'text-on-surface-variant' : 'text-on-surface group-hover:text-primary'}`}>Include TV</span>
                                     </label>
                                 </div>
                             </div>

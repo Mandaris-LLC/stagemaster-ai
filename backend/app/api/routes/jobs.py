@@ -25,6 +25,7 @@ async def create_job(
         style_preset=job_in.style_preset,
         fix_white_balance=job_in.fix_white_balance,
         wall_decorations=job_in.wall_decorations,
+        include_tv=job_in.include_tv,
         status="queued"
     )
     

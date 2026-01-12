@@ -14,6 +14,7 @@ class Job(Base):
     style_preset = Column(String, nullable=False)
     fix_white_balance = Column(Boolean, default=True)
     wall_decorations = Column(Boolean, default=True)
+    include_tv = Column(Boolean, default=False)
     status = Column(String, default="queued") # queued, in_progress, completed, error
     retry_count = Column(Integer, default=0)
     error_message = Column(String, nullable=True)

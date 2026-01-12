@@ -115,11 +115,12 @@ async def analyze_room(image_url: str) -> str:
 
 # Duplicate generate_image removed (confirmed)
 
-async def plan_furniture_placement(analysis: str, room_type: str, style_preset: str, wall_decorations: bool = True) -> str:
+async def plan_furniture_placement(analysis: str, room_type: str, style_preset: str, wall_decorations: bool = True, include_tv: bool = False) -> str:
     """
     Generates a furniture placement plan based on room analysis.
     """
     decor_instruction = "Include wall decorations like art, mirrors, or clocks, but ONLY those that do not require drilling into the wall (e.g., leaning mirrors, leaning art, or lightweight items that can be mounted with adhesive strips)." if wall_decorations else "Do NOT include any wall decorations or wall art."
+    tv_instruction = "Include a non-wall mounted flat screen TV in the furniture arrangement (e.g., on a TV stand or media console)." if include_tv else ""
     
     prompt = f"""
     Based on the following room analysis:
@@ -130,6 +131,7 @@ async def plan_furniture_placement(analysis: str, room_type: str, style_preset: 
     
     Provide a detailed furniture placement plan. List specific furniture items, their positions, and how they should look in the given design style.
     {decor_instruction}
+    {tv_instruction}
     Include artistic directions for the image generation step.
     
     IMPORTANT: The furniture arrangement must respect the existing room layout, doors, windows, and traffic flow. 
@@ -154,7 +156,8 @@ async def generate_staged_image_prompt(
     placement_plan: str,
     style_preset: str,
     fix_white_balance: bool = True,
-    wall_decorations: bool = True
+    wall_decorations: bool = True,
+    include_tv: bool = False
 ) -> str:
     """
     Generates a highly detailed prompt for the image generation model (e.g., Stable Diffusion or DALL-E)
@@ -166,6 +169,7 @@ async def generate_staged_image_prompt(
         wb_instruction = "STRICTLY PRESERVE the original white balance, color temperature, and lighting tint of the photo exactly as it is. Do NOT attempt to 'fix' or 'neutralize' the colors. If the original photo is warm/yellow or cool/blue, the final rendered image MUST maintain that exact same warmth or coolness."
     
     decor_instruction = "Add furniture and wall decor, ensuring that any wall-mounted items do not require drilling (e.g., use leaning art, mirrors on the floor, or lightweight decor)." if wall_decorations else "Add furniture only. Keep walls completely bare of any art or decorations."
+    tv_instruction = "If the room is a living room or similar include a non-wall mounted flat screen TV on a stand or console. If the room is a bedroom it is ok to place the TV on furniture facing the bed." if include_tv else ""
 
     prompt = f"""
     You are a professional architectural photographer and interior designer.
@@ -177,7 +181,7 @@ async def generate_staged_image_prompt(
     3. You MUST preserve the EXACT camera angle and perspective of the original image.
     4. You MUST preserve the current natural lighting direction, shadows, and reflections from windows/surfaces.
     5. {wb_instruction}
-    6. {decor_instruction} DO NOT remove or alter architectural elements.
+    6. {decor_instruction} {tv_instruction} DO NOT remove or alter architectural elements.
     
     Original Room Analysis:
     {analysis}

@@ -52,7 +52,8 @@ async def process_staging_job(job_id: str):
                 analysis,
                 db_job.room_type,
                 db_job.style_preset,
-                wall_decorations=db_job.wall_decorations
+                wall_decorations=db_job.wall_decorations,
+                include_tv=db_job.include_tv
             )
             
             db_job.progress_percent = 60.0
@@ -67,7 +68,8 @@ async def process_staging_job(job_id: str):
                 placement_plan,
                 db_job.style_preset,
                 fix_white_balance=db_job.fix_white_balance,
-                wall_decorations=db_job.wall_decorations
+                wall_decorations=db_job.wall_decorations,
+                include_tv=db_job.include_tv
             )
             
             db_job.progress_percent = 80.0

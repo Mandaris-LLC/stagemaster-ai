@@ -9,6 +9,7 @@ class JobBase(BaseModel):
     style_preset: str
     fix_white_balance: bool = True
     wall_decorations: bool = True
+    include_tv: bool = False
 
 class JobCreate(JobBase):
     image_id: UUID
