@@ -5,6 +5,10 @@ import styleModern from '../../assets/style-modern.png';
 import styleScandinavian from '../../assets/style-scandinavian.png';
 import styleIndustrial from '../../assets/style-industrial.png';
 import styleMinimalist from '../../assets/style-minimalist.png';
+import styleBohemian from '../../assets/style-bohemian.png';
+import styleCoastal from '../../assets/style-coastal.png';
+import styleFarmhouse from '../../assets/style-farmhouse.png';
+import styleLuxury from '../../assets/style-luxury.png';
 
 const styles = [
     {
@@ -30,6 +34,30 @@ const styles = [
         name: 'Minimalist',
         description: 'Pure simplicity, essential elements & space.',
         image: styleMinimalist
+    },
+    {
+        id: 'bohemian',
+        name: 'Bohemian',
+        description: 'Eclectic, vibrant, and full of natural textures and plants.',
+        image: styleBohemian
+    },
+    {
+        id: 'coastal',
+        name: 'Coastal',
+        description: 'Light, breezy, with soft blues and sandy neutrals.',
+        image: styleCoastal
+    },
+    {
+        id: 'farmhouse',
+        name: 'Farmhouse',
+        description: 'Rustic, cozy, and warm with wooden accents.',
+        image: styleFarmhouse
+    },
+    {
+        id: 'luxury',
+        name: 'Luxury',
+        description: 'Sophisticated, opulent, and high-end materials.',
+        image: styleLuxury
     },
 ];
 
