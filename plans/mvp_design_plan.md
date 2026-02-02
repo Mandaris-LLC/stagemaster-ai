@@ -51,7 +51,7 @@ Enable real estate agents to transform empty room photos into professionally sta
 
 ### Detailed Steps
 1. **Import Photo**: User drags/drops or selects interior image (max 25MB, JPG/PNG)
-2. **Select Room Type**: Living Room, Bedroom, Kitchen, Dining Room, Office, etc.
+2. **Select Room Type**: Living Room, Bedroom, Kitchen, Dining Room, Office, Other, etc.
 3. **Choose Style Presets**: 3-5 predefined styles (Modern, Traditional, Minimalist, etc.)
 4. **Render**: Queue job, show rendering progress with time estimates
 5. **Preview Result**: Before/after comparison with metadata panel
@@ -1083,7 +1083,7 @@ docker-compose exec backend python -m app.seed_data
 ### Phase 2: Core Upload Flow
 - [ ] Implement drag-and-drop image upload component with React Dropzone
 - [ ] Add file validation: JPG/PNG only, max 25MB, image type detection
-- [ ] Create room type selection UI with icons (Living Room, Bedroom, Kitchen, etc.)
+- [ ] Create room type selection UI with icons (Living Room, Bedroom, Kitchen, Dining Room, Office, Other, etc.)
 - [ ] Build style preset selection interface with visual thumbnails
 - [ ] Implement MinIO storage service with S3 upload functionality
 - [ ] Add image metadata storage in PostgreSQL (width, height, fileSize, format)

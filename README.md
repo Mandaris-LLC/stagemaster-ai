@@ -14,7 +14,7 @@ AI-powered virtual staging for real estate agents. Transform empty room photos i
 - **Clean & Professional UI**: Modern, light-themed interface with a focus on clarity and ease of use.
 - **Step-by-Step Workflow**: Intuitive 3-step process: Upload → Configure → Stage.
 - **Image Upload**: Drag & drop support for interior photos with real-time preview.
-- **Staging Controls**: Select room type (Living Room, Bedroom, Kitchen, etc.) and style presets (Modern, Minimalist, Scandinavian, Industrial).
+- **Staging Controls**: Select room type (Living Room, Bedroom, Kitchen, Dining Room, Office, Other) and style presets (Modern, Minimalist, Scandinavian, Industrial).
 - **AI Enhancements**: Optional toggles for fixing white balance and adding wall decorations.
 - **Async Processing**: Robust job queue using Redis and RQ with real-time status updates.
 - **Before/After Comparison**: Interactive slider for viewing staging results side-by-side with the original photo.

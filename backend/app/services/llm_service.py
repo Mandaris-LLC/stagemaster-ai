@@ -135,8 +135,8 @@ async def plan_furniture_placement(analysis: str, room_type: str, style_preset: 
     Include artistic directions for the image generation step.
     
     IMPORTANT: The furniture arrangement must respect the existing room layout, doors, windows, and traffic flow. 
-    Do not suggest removing or altering any architectural features (walls, windows, ceilings, floors).
-    The goal is to furnish the room AS IS.
+    Do not suggest removing or altering any architectural features (walls, windows, ceilings, floors) or existing room objects and fixtures (such as light fixtures, ceiling fans, switches, or vents).
+    The goal is to furnish the room AS IS, keeping all existing fixtures intact and unobstructed.
     """
     
     try:
@@ -169,7 +169,7 @@ async def generate_staged_image_prompt(
         wb_instruction = "STRICTLY PRESERVE the original white balance, color temperature, and lighting tint of the photo exactly as it is. Do NOT attempt to 'fix' or 'neutralize' the colors. If the original photo is warm/yellow or cool/blue, the final rendered image MUST maintain that exact same warmth or coolness."
     
     decor_instruction = "Add furniture and wall decor, ensuring that any wall-mounted items do not require drilling (e.g., use leaning art, mirrors on the floor, or lightweight decor)." if wall_decorations else "Add furniture only. Keep walls completely bare of any art or decorations."
-    tv_instruction = "If the room is a living room or similar include a non-wall mounted flat screen TV on a stand or console. If the room is a bedroom it is ok to place the TV on furniture facing the bed." if include_tv else ""
+    tv_instruction = "Include a non-wall mounted flat screen TV on a professional stand or media console, appropriately placed for the room's purpose and layout." if include_tv else ""
 
     prompt = f"""
     You are a professional architectural photographer and interior designer.
@@ -182,6 +182,7 @@ async def generate_staged_image_prompt(
     4. You MUST preserve the current natural lighting direction, shadows, and reflections from windows/surfaces.
     5. {wb_instruction}
     6. {decor_instruction} {tv_instruction} DO NOT remove or alter architectural elements.
+    7. CRITICAL: Do NOT remove, modify, or obscure any existing room objects or fixtures such as light fixtures, ceiling fans, wall switches, or vents. They must remain exactly as they are in the original photo.
     
     Original Room Analysis:
     {analysis}
@@ -245,6 +246,10 @@ async def generate_image(prompt: str, original_image_url: str = None, fix_white_
              if not fix_white_balance:
                  wb_preservation_instruction = "\n\nCRITICAL: You MUST preserve the original white balance and color temperature of the input image. Do NOT auto-correct or neutralize the colors. If the input is warm, the output must be equally warm."
                  messages_content[0]["text"] += wb_preservation_instruction
+             
+             # Add instruction to preserve room objects
+             room_object_instruction = "\n\nCRITICAL: Do NOT remove, replace, or modify any existing room objects such as light fixtures, ceiling fans, wall switches, or vents. These must be preserved exactly as they appear in the original image."
+             messages_content[0]["text"] += room_object_instruction
         
         payload = {
             "model": model,

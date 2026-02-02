@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sofa, Bed, Utensils, Coffee, Monitor, Bath } from 'lucide-react';
+import { Sofa, Bed, Utensils, Coffee, Monitor, Bath, LayoutGrid } from 'lucide-react';
 
 const roomTypes = [
     { id: 'living_room', name: 'Living Room', icon: Sofa },
@@ -8,6 +8,7 @@ const roomTypes = [
     { id: 'kitchen', name: 'Kitchen', icon: Coffee },
     { id: 'dining_room', name: 'Dining Room', icon: Utensils },
     { id: 'office', name: 'Office', icon: Monitor },
+    { id: 'other', name: 'Other', icon: LayoutGrid },
 ];
 
 const RoomTypeSelector = ({ selected, onSelect }) => {
