@@ -61,20 +61,22 @@ const styles = [
     },
 ];
 
-const StylePresets = ({ selected, onSelect }) => {
+const StylePresets = ({ selected, onSelect, disabled = false }) => {
     return (
-        <div className="w-full">
+        <div className={`w-full ${disabled ? 'opacity-60 cursor-not-allowed' : ''}`}>
             <div className="grid grid-cols-2 gap-4">
                 {styles.map((style) => {
                     const isActive = selected === style.id;
                     return (
                         <button
                             key={style.id}
-                            onClick={() => onSelect(style.id)}
+                            onClick={() => !disabled && onSelect(style.id)}
+                            disabled={disabled}
                             className={`relative overflow-hidden rounded-xl border text-left transition-all duration-150 group
                                 ${isActive
                                     ? 'border-accent ring-2 ring-accent shadow-elevation-3'
-                                    : 'border-outline-variant bg-surface hover:border-accent-400 hover:shadow-elevation-2'}`}
+                                    : 'border-outline-variant bg-surface hover:border-accent-400 hover:shadow-elevation-2'}
+                                ${disabled ? 'cursor-not-allowed' : ''}`}
                         >
                             {/* Image */}
                             <div className="aspect-[4/3] overflow-hidden">

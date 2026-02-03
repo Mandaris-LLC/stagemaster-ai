@@ -209,6 +209,7 @@ const RoomDetail = () => {
     const referenceImage = room.images?.find(img => img.id === room.reference_image_id);
     const otherImages = room.images?.filter(img => img.id !== room.reference_image_id) || [];
     const isTVDisabled = room.room_type === 'bathroom' || room.room_type === 'kitchen';
+    const isSecondaryAngle = selectedImage && selectedImage.id !== room.reference_image_id;
 
     return (
         <div className="min-h-screen bg-surface-dim">
@@ -459,41 +460,42 @@ const RoomDetail = () => {
                                                     </div>
                                                 </label>
 
-                                                <label className="flex items-center gap-3 cursor-pointer group p-3 rounded-xl hover:bg-surface-container transition-colors">
+                                                <label className={`flex items-center gap-3 p-3 rounded-xl transition-colors group ${isSecondaryAngle ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-surface-container'}`}>
                                                     <div className="relative flex items-center">
                                                         <input
                                                             type="checkbox"
                                                             checked={wallDecorations}
-                                                            onChange={(e) => setWallDecorations(e.target.checked)}
+                                                            onChange={(e) => !isSecondaryAngle && setWallDecorations(e.target.checked)}
+                                                            disabled={isSecondaryAngle}
                                                             className="peer sr-only"
                                                         />
-                                                        <div className="w-5 h-5 border-2 border-outline rounded peer-checked:bg-primary peer-checked:border-primary transition-all" />
+                                                        <div className={`w-5 h-5 border-2 rounded transition-all ${isSecondaryAngle ? 'border-outline-variant bg-surface-container' : 'border-outline peer-checked:bg-primary peer-checked:border-primary'}`} />
                                                         <svg className="absolute w-3.5 h-3.5 text-white left-[3px] opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
                                                             <path d="M5 13l4 4L19 7" />
                                                         </svg>
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className="text-on-surface font-semibold group-hover:text-primary transition-colors">Wall Decorations</span>
+                                                        <span className={`font-semibold transition-colors ${isSecondaryAngle ? 'text-on-surface-variant' : 'text-on-surface group-hover:text-primary'}`}>Wall Decorations</span>
                                                         <span className="text-xs text-on-surface-variant">Add paintings, mirrors, and wall art</span>
                                                     </div>
                                                 </label>
 
-                                                <label className={`flex items-center gap-3 p-3 rounded-xl transition-colors group ${isTVDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-surface-container'}`}>
+                                                <label className={`flex items-center gap-3 p-3 rounded-xl transition-colors group ${isTVDisabled || isSecondaryAngle ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-surface-container'}`}>
                                                     <div className="relative flex items-center">
                                                         <input
                                                             type="checkbox"
                                                             checked={!isTVDisabled && includeTV}
-                                                            onChange={(e) => setIncludeTV(e.target.checked)}
-                                                            disabled={isTVDisabled}
+                                                            onChange={(e) => !isTVDisabled && !isSecondaryAngle && setIncludeTV(e.target.checked)}
+                                                            disabled={isTVDisabled || isSecondaryAngle}
                                                             className="peer sr-only"
                                                         />
-                                                        <div className={`w-5 h-5 border-2 rounded transition-all ${isTVDisabled ? 'border-outline-variant bg-surface-container' : 'border-outline peer-checked:bg-primary peer-checked:border-primary'}`} />
+                                                        <div className={`w-5 h-5 border-2 rounded transition-all ${(isTVDisabled || isSecondaryAngle) ? 'border-outline-variant bg-surface-container' : 'border-outline peer-checked:bg-primary peer-checked:border-primary'}`} />
                                                         <svg className="absolute w-3.5 h-3.5 text-white left-[3px] opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
                                                             <path d="M5 13l4 4L19 7" />
                                                         </svg>
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className={`font-semibold transition-colors ${isTVDisabled ? 'text-on-surface-variant' : 'text-on-surface group-hover:text-primary'}`}>Include TV</span>
+                                                        <span className={`font-semibold transition-colors ${(isTVDisabled || isSecondaryAngle) ? 'text-on-surface-variant' : 'text-on-surface group-hover:text-primary'}`}>Include TV</span>
                                                         <span className="text-xs text-on-surface-variant">Place a modern flat-screen TV in the room</span>
                                                     </div>
                                                 </label>
@@ -504,7 +506,7 @@ const RoomDetail = () => {
                                     {/* Right: Style Presets */}
                                     <div>
                                         <h4 className="text-sm font-bold text-on-surface-variant uppercase tracking-wider mb-4">Design Style</h4>
-                                        <StylePresets selected={style} onSelect={setStyle} />
+                                        <StylePresets selected={style} onSelect={setStyle} disabled={isSecondaryAngle} />
                                     </div>
                                 </div>
                             </div>

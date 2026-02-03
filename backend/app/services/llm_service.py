@@ -151,7 +151,7 @@ async def plan_furniture_placement(
     Generates a furniture placement plan based on room analysis.
     Uses vision if images are provided. Uses reference_plan for strict consistency.
     """
-    decor_instruction = "Include wall decorations like art, mirrors, or clocks, but ONLY those that do not require drilling into the wall (e.g., leaning mirrors, leaning art, or lightweight items that can be mounted with adhesive strips)." if wall_decorations else "Do NOT include any wall decorations or wall art."
+    decor_instruction = "Include wall decorations like hanging paintings or framed posters that match the chosen style. You may also include a maximum of one mirror or art piece leaning against a wall. Ensure all decorations are staged as non-permanent (e.g., using adhesive strips for hanging items)." if wall_decorations else "Do NOT include any wall decorations or wall art."
     tv_instruction = "Include a non-wall mounted flat screen TV in the furniture arrangement (e.g., on a TV stand or media console)." if include_tv else ""
     
     consistency_hint = ""
@@ -243,7 +243,7 @@ async def generate_staged_image_prompt(
     else:
         wb_instruction = "STRICTLY PRESERVE the original white balance, color temperature, and lighting tint of the photo exactly as it is. Do NOT attempt to 'fix' or 'neutralize' the colors. If the original photo is warm/yellow or cool/blue, the final rendered image MUST maintain that exact same warmth or coolness."
     
-    decor_instruction = "Add furniture and wall decor, ensuring that any wall-mounted items do not require drilling (e.g., use leaning art, mirrors on the floor, or lightweight decor)." if wall_decorations else "Add furniture only. Keep walls completely bare of any art or decorations."
+    decor_instruction = "Include furniture and wall decor. You may include hanging paintings or framed posters (aligned with the style), and at most one object (like a mirror or art piece) leaning against a wall. Ensure all staged wall items appear as if mounted via non-destructive means like adhesive strips." if wall_decorations else "Add furniture only. Keep walls completely bare of any art or decorations."
     tv_instruction = "Include a non-wall mounted flat screen TV on a professional stand or media console, appropriately placed for the room's purpose and layout." if include_tv else ""
 
     prompt = f"""

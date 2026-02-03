@@ -41,7 +41,7 @@ const RenderingProgress = ({ job }) => {
             </div>
 
             {/* Status Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-outline-variant">
+            <div className="pt-6 border-t border-outline-variant">
                 <div className="flex items-start gap-3">
                     <div className="p-2.5 bg-info/10 rounded-lg text-info">
                         <Compass size={18} />
@@ -49,26 +49,6 @@ const RenderingProgress = ({ job }) => {
                     <div>
                         <p className="text-xs font-medium text-on-surface-muted uppercase tracking-wide mb-1">Current Step</p>
                         <p className="text-sm font-medium text-primary">{job.current_step || 'Analyzing layout...'}</p>
-                    </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                    <div className="p-2.5 bg-warning/10 rounded-lg text-warning">
-                        <Clock size={18} />
-                    </div>
-                    <div>
-                        <p className="text-xs font-medium text-on-surface-muted uppercase tracking-wide mb-1">Elapsed Time</p>
-                        <p className="text-sm font-medium text-primary tabular-nums">00:45</p>
-                    </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                    <div className="p-2.5 bg-success/10 rounded-lg text-success">
-                        <Zap size={18} />
-                    </div>
-                    <div>
-                        <p className="text-xs font-medium text-on-surface-muted uppercase tracking-wide mb-1">Est. Remaining</p>
-                        <p className="text-sm font-medium text-primary tabular-nums">~01:45</p>
                     </div>
                 </div>
             </div>
