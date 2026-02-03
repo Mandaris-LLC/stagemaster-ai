@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Download, Info, Zap, ShieldCheck, RefreshCw, Loader2 } from 'lucide-react';
 import Header from '../components/Common/Header';
 import RenderingProgress from '../components/Staging/RenderingProgress';
@@ -9,6 +9,7 @@ import { getJobStatus, createStagingJob } from '../services/api';
 const JobDetail = () => {
     const { jobId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const [job, setJob] = useState(null);
     const [error, setError] = useState(null);
     const [isRetrying, setIsRetrying] = useState(false);
@@ -65,11 +66,11 @@ const JobDetail = () => {
                 {/* Back Link */}
                 <div className="mb-8 animate-fade-in">
                     <Link
-                        to="/gallery"
+                        to={location.state?.from === 'room' ? `/room/${location.state.roomId}` : "/gallery"}
                         className="inline-flex items-center gap-2 text-on-surface-variant hover:text-accent font-medium text-sm transition-colors group"
                     >
                         <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1" />
-                        Back to Gallery
+                        {location.state?.from === 'room' ? "Return to Room" : "Back to Gallery"}
                     </Link>
                 </div>
 

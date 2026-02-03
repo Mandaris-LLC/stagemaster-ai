@@ -121,7 +121,7 @@ const RoomDetail = () => {
                 wallDecorations,
                 includeTV
             });
-            navigate(`/job/${job.id}`);
+            navigate(`/job/${job.id}`, { state: { from: 'room', roomId: roomId } });
         } catch (error) {
             console.error("Error starting job:", error);
             alert("Failed to start staging job.");
