@@ -10,6 +10,7 @@ class JobBase(BaseModel):
     fix_white_balance: bool = False
     wall_decorations: bool = True
     include_tv: bool = False
+    room_id: Optional[UUID] = None
 
 class JobCreate(JobBase):
     image_id: UUID

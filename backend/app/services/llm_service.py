@@ -76,34 +76,56 @@ async def _fetch_and_encode_image(image_url: str) -> tuple[str, str, int, int]:
         image_base64 = base64.b64encode(image_content).decode('utf-8')
         return "image/jpeg", image_base64, 0, 0
 
-async def analyze_room(image_url: str) -> str:
+async def analyze_room(image_url: str, reference_image_url: str = None, reference_analysis: str = None) -> str:
     """
     Analyzes room layout, surfaces, and depth using LiteLLM/OpenRouter.
     Returns a text description of the room analysis.
+    If reference_image_url/reference_analysis is provided, it uses it to maintain consistency.
     """
+    consistency_instruction = ""
+    if reference_image_url:
+        consistency_instruction = f"""
+        CRITICAL ARCHITECTURAL ANCHORING:
+        This is the SAME room as shown in the reference: {reference_image_url}.
+        1. DEFINE ROTATION: Conclude if this Target Angle is Same-Side, Side-Wall, or Opposite-Side (~180).
+        2. CHOOSE 2 ANCHORS: Identify two fixed landmarks (e.g., "The Large Window" and "The Far Corner") visible or implied in both views.
+        3. SPATIAL PROJECTION: Map the furniture relative to these Anchors. If the "Large Window" moved from Left to Right, the furniture near it MUST follow the window to the Right.
+        """
+        if reference_analysis:
+            consistency_instruction += f"\nHere is the analysis of that reference view: {reference_analysis}"
+
     prompt = f"""
     Analyze the uploaded interior photo for virtual staging.
-    Provide a detailed analysis of:
-    1. Room dimensions and layout.
-    2. Floor material and visible surfaces (walls, ceiling).
-    3. Lighting conditions, window placements, natural light sources, and reflections.
-    4. Color temperature and existing white balance (note if it needs correction).
-    5. Suggested zones for furniture placement.
+    {consistency_instruction}
     
-    Image URL: {image_url}
+    TASK: Provide a detailed architectural analysis of this room.
+    1. Identify all surfaces (floor, walls, ceiling) and their materials.
+    2. Identify all architectural features (windows, doors, paths of travel).
+    3. Identify all BUILT-IN FIXTURES (ceiling lights, fans, wall outlets, vents, switches).
+    4. Estimate room dimensions and lighting direction.
+    
+    IMPORTANT: Focus on the "bones" of the room. This analysis will be used to ensure that subsequent staging steps do not alter the room's layout or fixtures.
     """
     
     try:
         media_type, image_base64, _, _ = await _fetch_and_encode_image(image_url)
         
+        messages = [
+            {"role": "user", "content": [
+                {"type": "text", "text": prompt},
+                {"type": "image_url", "image_url": {"url": f"data:{media_type};base64,{image_base64}"}}
+            ]}
+        ]
+
+        if reference_image_url:
+            ref_media_type, ref_image_base64, _, _ = await _fetch_and_encode_image(reference_image_url)
+            messages[0]["content"].append(
+                {"type": "image_url", "image_url": {"url": f"data:{ref_media_type};base64,{ref_image_base64}"}}
+            )
+
         response = await litellm.acompletion(
             model=settings.LITELLM_ANALYSIS_MODEL,
-            messages=[
-                {"role": "user", "content": [
-                    {"type": "text", "text": prompt},
-                    {"type": "image_url", "image_url": {"url": f"data:{media_type};base64,{image_base64}"}}
-                ]}
-            ],
+            messages=messages,
             api_key=settings.OPENROUTER_API_KEY
         )
         return response.choices[0].message.content
@@ -115,34 +137,74 @@ async def analyze_room(image_url: str) -> str:
 
 # Duplicate generate_image removed (confirmed)
 
-async def plan_furniture_placement(analysis: str, room_type: str, style_preset: str, wall_decorations: bool = True, include_tv: bool = False) -> str:
+async def plan_furniture_placement(
+    analysis: str, 
+    room_type: str, 
+    style_preset: str, 
+    wall_decorations: bool = True, 
+    include_tv: bool = False,
+    target_image_url: str = None,
+    reference_image_url: str = None,
+    reference_plan: str = None
+) -> str:
     """
     Generates a furniture placement plan based on room analysis.
+    Uses vision if images are provided. Uses reference_plan for strict consistency.
     """
     decor_instruction = "Include wall decorations like art, mirrors, or clocks, but ONLY those that do not require drilling into the wall (e.g., leaning mirrors, leaning art, or lightweight items that can be mounted with adhesive strips)." if wall_decorations else "Do NOT include any wall decorations or wall art."
     tv_instruction = "Include a non-wall mounted flat screen TV in the furniture arrangement (e.g., on a TV stand or media console)." if include_tv else ""
     
+    consistency_hint = ""
+    if reference_image_url:
+        consistency_hint = f"""
+        PHYSICAL INVENTORY MAPPING (STAGED REFERENCE PROVIDED):
+        1. LIST EVERY OBJECT: From the reference image, identify every piece of furniture (Sofa, Rug, Coffee Table, Art, Lamp).
+        2. MAP TO TARGET: For EACH item, specify its new 2D/3D location in the Target Image. 
+        3. AXIS CHECK: If the target camera is on the opposite side of the room, you MUST invert the positions (Left becomes Right, Near becomes Far).
+        4. NO OMISSIONS: You must include EVERY item visible in the reference view into the target view's staging plan.
+        """
+        if reference_plan:
+            consistency_hint += f"\nSTRICT TASK: Replicate the following layout exactly in the new angle: {reference_plan}"
+
     prompt = f"""
     Based on the following room analysis:
     {analysis}
     
     Room Type: {room_type}
     Design Style: {style_preset}
+    {consistency_hint}
     
-    Provide a detailed furniture placement plan. List specific furniture items, their positions, and how they should look in the given design style.
+    Provide a detailed furniture placement plan for the TARGET IMAGE. 
+    If a reference image is provided, your plan MUST be a logical continuation of the staging seen there.
+    List specific furniture items, their positions, and how they should look.
     {decor_instruction}
     {tv_instruction}
-    Include artistic directions for the image generation step.
     
-    IMPORTANT: The furniture arrangement must respect the existing room layout, doors, windows, and traffic flow. 
-    Do not suggest removing or altering any architectural features (walls, windows, ceilings, floors) or existing room objects and fixtures (such as light fixtures, ceiling fans, switches, or vents).
-    The goal is to furnish the room AS IS, keeping all existing fixtures intact and unobstructed.
+    IMPORTANT ARCHITECTURAL LOCKDOWN: The furniture arrangement must respect the existing room layout, doors, windows, and traffic flow. 
+    Do not suggest removing, altering, or obstructing any architectural features or existing fixtures (light fixtures, fans, vents, windows).
+    The goal is to furnish the room AS IS, matching the reference view perfectly without changing a single structural line.
     """
     
     try:
+        messages = [{"role": "user", "content": [{"type": "text", "text": prompt}]}]
+        
+        if target_image_url:
+            media_type, image_base64, _, _ = await _fetch_and_encode_image(target_image_url)
+            messages[0]["content"].append({
+                "type": "image_url", 
+                "image_url": {"url": f"data:{media_type};base64,{image_base64}"}
+            })
+            
+        if reference_image_url:
+            ref_media_type, ref_image_base64, _, _ = await _fetch_and_encode_image(reference_image_url)
+            messages[0]["content"].append({
+                "type": "image_url", 
+                "image_url": {"url": f"data:{ref_media_type};base64,{ref_image_base64}"}
+            })
+
         response = await litellm.acompletion(
             model=settings.LITELLM_ANALYSIS_MODEL,
-            messages=[{"role": "user", "content": prompt}],
+            messages=messages,
             api_key=settings.OPENROUTER_API_KEY
         )
         return response.choices[0].message.content
@@ -157,12 +219,25 @@ async def generate_staged_image_prompt(
     style_preset: str,
     fix_white_balance: bool = False,
     wall_decorations: bool = True,
-    include_tv: bool = False
+    include_tv: bool = False,
+    reference_image_url: str = None,
+    reference_plan: str = None
 ) -> str:
     """
     Generates a highly detailed prompt for the image generation model (e.g., Stable Diffusion or DALL-E)
     to stage the room.
     """
+    consistency_instruction = ""
+    if reference_image_url:
+        consistency_instruction = f"""
+        STAGING EDIT INSTRUCTIONS (STAGED REFERENCE):
+        The Target Image must be virtual staged using the EXACT physical inventory of the Reference Image.
+        INVENTORY LIST: List all items from the reference (Sofa, Rug, Coffee Table, Art, etc.).
+        3D RE-PROJECTION: Describe their exact new placement in THIS Target Image angle. Ensure the layout is a logical spatial continuation of the reference view.
+        """
+        if reference_plan:
+            consistency_instruction += f"\nTHE SOURCE OF TRUTH FOR FURNITURE IS: {reference_plan}"
+
     if fix_white_balance:
         wb_instruction = "CORRECT the white balance if the original image is too warm (yellow) or cool (blue), making it look like high-end neutral architectural photography, BUT ensure the original colors of painted surfaces (walls, etc.) are preserved and not altered by the correction."
     else:
@@ -175,14 +250,17 @@ async def generate_staged_image_prompt(
     You are a professional architectural photographer and interior designer.
     Create a highly detailed, photorealistic prompt for generating a virtually staged version of this room.
     
-    CRITICAL INSTRUCTIONS:
-    1. The goal is to VIRTUAL STAGE the EXISTING room.
-    2. You MUST preserve the EXACT structure of the room (walls, ceiling, floor plan, windows, doors).
-    3. You MUST preserve the EXACT camera angle and perspective of the original image.
-    4. You MUST preserve the current natural lighting direction, shadows, and reflections from windows/surfaces.
+    {consistency_instruction}
+    
+    CRITICAL PERSPECTIVE LOCKDOWN:
+    1. The goal is to VIRTUAL STAGE the EXISTING room pixels.
+    2. You MUST preserve the 100% EXACT structure and PIXEL POSITION of the room's architecture (walls, ceiling, floor lines, windows, doors) from the Target Image.
+    3. You MUST preserve the EXACT camera angle and lens perspective of the Target Image. Do NOT move the camera or warp the background to match the reference image.
+    4. You MUST preserve the current natural lighting direction, shadows, and reflections exactly as they appear in the Target Image.
     5. {wb_instruction}
     6. {decor_instruction} {tv_instruction} DO NOT remove or alter architectural elements.
-    7. CRITICAL: Do NOT remove, modify, or obscure any existing room objects or fixtures such as light fixtures, ceiling fans, wall switches, or vents. They must remain exactly as they are in the original photo.
+    7. CRITICAL: Do NOT remove, modify, or obscure any existing room objects, fixtures, or layout elements such as light fixtures, ceiling fans, wall switches, vents, or built-ins. They must remain exactly as they are.
+    8. THE BACKGROUND IS SACRED: Your task is to overlay furniture into the room EXACTLY as it is, as if you are physically placing items into the existing space. The architectural background of the Target Image must remain pixel-identical.
     
     Original Room Analysis:
     {analysis}
@@ -199,9 +277,25 @@ async def generate_staged_image_prompt(
     """
     
     try:
+        messages = [{"role": "user", "content": [{"type": "text", "text": prompt}]}]
+        
+        if original_image_url:
+            media_type, image_base64, _, _ = await _fetch_and_encode_image(original_image_url)
+            messages[0]["content"].append({
+                "type": "image_url", 
+                "image_url": {"url": f"data:{media_type};base64,{image_base64}"}
+            })
+            
+        if reference_image_url:
+            ref_media_type, ref_image_base64, _, _ = await _fetch_and_encode_image(reference_image_url)
+            messages[0]["content"].append({
+                "type": "image_url", 
+                "image_url": {"url": f"data:{ref_media_type};base64,{ref_image_base64}"}
+            })
+
         response = await litellm.acompletion(
             model=settings.LITELLM_ANALYSIS_MODEL,
-            messages=[{"role": "user", "content": prompt}],
+            messages=messages,
             api_key=settings.OPENROUTER_API_KEY
         )
         return response.choices[0].message.content
@@ -209,7 +303,7 @@ async def generate_staged_image_prompt(
         logger.error(f"Error calling LiteLLM for generation prompt: {str(e)}")
         raise
 
-async def generate_image(prompt: str, original_image_url: str = None, fix_white_balance: bool = False) -> bytes:
+async def generate_image(prompt: str, original_image_url: str = None, fix_white_balance: bool = False, reference_image_url: str = None) -> bytes:
     """
     Generates an image using the configured image generation model.
     Returns the raw binary content of the generated image.
@@ -230,26 +324,36 @@ async def generate_image(prompt: str, original_image_url: str = None, fix_white_
         if model.startswith("openrouter/"):
             model = model.replace("openrouter/", "")
 
-        messages_content = [{"type": "text", "text": prompt}]
+        messages_content = []
+        
+        # 1. Reference Image (Context ONLY) - FIRST
+        if reference_image_url:
+            messages_content.append({"type": "text", "text": f"\n\nCONSISTENCY REFERENCE (Staged Angle):\nThis image shows the EXISTING furniture and style from another angle of the same room. \nUse this ONLY to identify the inventory of items to be placed (materials, styles, exact objects)."})
+            ref_media_type, ref_image_base64, _, _ = await _fetch_and_encode_image(reference_image_url)
+            messages_content.append(
+                {"type": "image_url", "image_url": {"url": f"data:{ref_media_type};base64,{ref_image_base64}"}}
+            )
 
+        # 2. Target Image (THE MASTER BACKGROUND) - SECOND & FINAL
         if original_image_url:
+             messages_content.append({"type": "text", "text": "THE TARGET IMAGE (Background to be Edited):\nThis is the photo you are virtually staging. Treat this as the absolute, immutable background. Do NOT change its camera angle, perspective, or a single pixel of the architecture (walls, windows, fixtures)."})
              media_type, image_base64, width, height = await _fetch_and_encode_image(original_image_url)
              messages_content.append(
                  {"type": "image_url", "image_url": {"url": f"data:{media_type};base64,{image_base64}"}}
              )
              
-             # Add instruction for output resolution if we have valid dimensions
+             # Add instructions for this image
+             extra_text = f"\n\nEDIT TASK: OVERLAY STAGING\n{prompt}"
+             
              if width > 0 and height > 0:
-                 resolution_instruction = f"\n\nIMPORTANT: Generate the output image with the exact resolution of {width}x{height} pixels."
-                 messages_content[0]["text"] += resolution_instruction
+                 extra_text += f"\n\nIMPORTANT: The output image MUST maintain the exact {width}x{height} resolution."
              
              if not fix_white_balance:
-                 wb_preservation_instruction = "\n\nCRITICAL: You MUST preserve the original white balance and color temperature of the input image. Do NOT auto-correct or neutralize the colors. If the input is warm, the output must be equally warm."
-                 messages_content[0]["text"] += wb_preservation_instruction
+                 extra_text += "\n\nCRITICAL: PRESERVE the original white balance of this Target Image."
              
-             # Add instruction to preserve room objects
-             room_object_instruction = "\n\nCRITICAL: Do NOT remove, replace, or modify any existing room objects such as light fixtures, ceiling fans, wall switches, or vents. These must be preserved exactly as they appear in the original image."
-             messages_content[0]["text"] += room_object_instruction
+             extra_text += "\n\nFINAL CHECK: The generated image must be this Target Image with the furniture added. Any change to the camera height, tilt, or room's geometry is a CRITICAL FAILURE."
+             
+             messages_content.append({"type": "text", "text": extra_text})
         
         payload = {
             "model": model,

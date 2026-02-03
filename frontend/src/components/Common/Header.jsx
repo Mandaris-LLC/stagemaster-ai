@@ -19,7 +19,13 @@ const Header = () => {
                         to="/gallery"
                         className="px-4 py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-md text-sm font-medium transition-colors"
                     >
-                        My Gallery
+                        Gallery
+                    </Link>
+                    <Link
+                        to="/properties"
+                        className="px-4 py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-md text-sm font-medium transition-colors"
+                    >
+                        Properties
                     </Link>
                     <Link
                         to="#"

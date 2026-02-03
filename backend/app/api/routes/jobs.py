@@ -26,6 +26,7 @@ async def create_job(
         fix_white_balance=job_in.fix_white_balance,
         wall_decorations=job_in.wall_decorations,
         include_tv=job_in.include_tv,
+        room_id=job_in.room_id,
         status="queued"
     )
     

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import images, jobs
+from app.api.routes import images, jobs, properties
 from app.models import Base
 from app.models.base import engine
 
@@ -24,6 +24,16 @@ async def startup():
         try:
             async with engine.begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)
+                # Manual migration for room_id column in images table
+                from sqlalchemy import text
+                try:
+                    await conn.execute(text("ALTER TABLE images ADD COLUMN IF NOT EXISTS room_id UUID REFERENCES rooms(id)"))
+                    await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS room_id UUID REFERENCES rooms(id)"))
+                    await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS analysis TEXT"))
+                    await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS placement_plan TEXT"))
+                    await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS generation_prompt TEXT"))
+                except Exception as e:
+                    print(f"Migration error (already exists?): {e}")
             
             # Ensure default user exists
             from sqlalchemy.ext.asyncio import AsyncSession
@@ -55,6 +65,7 @@ async def startup():
 
 app.include_router(images.router, prefix="/api/v1/images", tags=["images"])
 app.include_router(jobs.router, prefix="/api/v1/jobs", tags=["jobs"])
+app.include_router(properties.router, prefix="/api/v1/properties", tags=["properties"])
 
 @app.get("/")
 async def root():

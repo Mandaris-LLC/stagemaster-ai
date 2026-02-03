@@ -19,4 +19,6 @@ class ImageRead(ImageBase):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
     original_url: str
+    latest_result_url: Optional[str] = None
+    latest_settings: Optional[dict] = None
     created_at: datetime

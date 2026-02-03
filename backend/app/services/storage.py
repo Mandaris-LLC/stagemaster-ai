@@ -50,6 +50,9 @@ class StorageService:
         )
         return self.get_url(bucket, object_name)
 
+    async def delete_file(self, bucket: str, object_name: str):
+        self.client.remove_object(bucket, object_name)
+
     def get_url(self, bucket: str, object_name: str):
         # For local development with MinIO in Docker, we might need to handle external vs internal URLs
         # For now, returning a direct URL. In production, this would be a signed URL or CDN URL.

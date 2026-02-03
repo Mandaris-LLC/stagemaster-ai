@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Float, Boolean
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 from app.models.base import Base
 
 class Job(Base):
@@ -10,7 +11,11 @@ class Job(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     image_id = Column(UUID(as_uuid=True), ForeignKey("images.id"), nullable=False)
+    room_id = Column(UUID(as_uuid=True), ForeignKey("rooms.id"), nullable=True)
     room_type = Column(String, nullable=False)
+    style_preset = Column(String, nullable=False)
+
+    image = relationship("Image", back_populates="jobs")
     style_preset = Column(String, nullable=False)
     fix_white_balance = Column(Boolean, default=False)
     wall_decorations = Column(Boolean, default=True)
@@ -25,3 +30,8 @@ class Job(Base):
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
     result_url = Column(String, nullable=True)
+    
+    # Store LLM results for consistency
+    analysis = Column(String, nullable=True)
+    placement_plan = Column(String, nullable=True)
+    generation_prompt = Column(String, nullable=True)
