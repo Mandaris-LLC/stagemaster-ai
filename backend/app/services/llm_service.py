@@ -102,8 +102,9 @@ async def analyze_room(image_url: str, reference_image_url: str = None, referenc
     1. Identify all surfaces (floor, walls, ceiling) and their materials.
     2. Identify all architectural features (windows, doors, paths of travel).
     3. Identify all BUILT-IN FIXTURES (ceiling lights, fans, wall outlets, vents, switches).
-    4. Estimate room dimensions and lighting direction.
-    5. CRITICAL: Identify any large, empty wall surfaces that are prominent in the view. Note their size and position (e.g., "Large blank wall on the left, behind the intended sofa area").
+    4. CRITICAL: Identify any OPEN or VISIBLE CLOSETS. Note if the interior is visible, its size, and any existing shelves or rods.
+    5. Estimate room dimensions and lighting direction.
+    6. CRITICAL: Identify any large, empty wall surfaces that are prominent in the view. Note their size and position (e.g., "Large blank wall on the left, behind the intended sofa area").
     
     IMPORTANT: Focus on the "bones" of the room. This analysis will be used to ensure that subsequent staging steps do not alter the room's layout or fixtures.
     """
@@ -180,6 +181,8 @@ async def plan_furniture_placement(
     List specific furniture items, their positions, and how they should look.
     {decor_instruction}
     {tv_instruction}
+    
+    CLOSET STAGING: If an open or visible closet was identified in the analysis, you MUST include a staging plan for its interior. This should include organized clothing on matching hangers, neatly folded items on shelves, and stylish storage bins or baskets to make it look functional and attractive.
     
     IMPORTANT ARCHITECTURAL LOCKDOWN: The furniture arrangement must respect the existing room layout, doors, windows, and traffic flow. 
     Do not suggest removing, altering, or obstructing any architectural features or existing fixtures (light fixtures, fans, vents, windows).
@@ -260,8 +263,9 @@ async def generate_staged_image_prompt(
     4. You MUST preserve the current natural lighting direction, shadows, and reflections exactly as they appear in the Target Image.
     5. {wb_instruction}
     6. {decor_instruction} {tv_instruction} DO NOT remove or alter architectural elements.
-    7. CRITICAL: Do NOT remove, modify, or obscure any existing room objects, fixtures, or layout elements such as light fixtures, ceiling fans, wall switches, vents, or built-ins. They must remain exactly as they are.
-    8. THE BACKGROUND IS SACRED: Your task is to overlay furniture into the room EXACTLY as it is, as if you are physically placing items into the existing space. The architectural background of the Target Image must remain pixel-identical.
+    7. CLOSET STAGING: If a closet is visible or open, render it as fully staged with organized, high-end clothing, matching wooden hangers, and neat storage accessories.
+    8. CRITICAL: Do NOT remove, modify, or obscure any existing room objects, fixtures, or layout elements such as light fixtures, ceiling fans, wall switches, vents, or built-ins. They must remain exactly as they are.
+    9. THE BACKGROUND IS SACRED: Your task is to overlay furniture into the room EXACTLY as it is, as if you are physically placing items into the existing space. The architectural background of the Target Image must remain pixel-identical.
     
     Original Room Analysis:
     {analysis}
