@@ -7,7 +7,9 @@ AI-powered virtual staging for real estate agents. Transform empty room photos i
 
 | Landing Page | Gallery View |
 | :---: | :---: |
-| ![Landing Page](screenshots/screencapture-localhost-5173-2026-01-11-20_55_48.png) | ![Gallery View](screenshots/screencapture-localhost-5173-gallery-2026-01-11-21_22_26.png) |
+| ![Landing Page](screenshots/screencapture-localhost-5173-2026-02-03-08_08_11.png) | ![Gallery View](screenshots/screencapture-localhost-5173-gallery-2026-02-03-08_09_58.png) |
+| **Room Configuration** | **Staging Progress** |
+| ![Room Configuration](screenshots/screencapture-localhost-5173-room-1e493280-8d68-4997-8d89-eba282671bd1-2026-02-03-08_09_37.png) | ![Staging Progress](screenshots/screencapture-localhost-5173-job-9e6a6dfa-0178-442a-8856-851ca1ff5b6f-2026-02-03-08_11_12.png) |
 
 ---
 
