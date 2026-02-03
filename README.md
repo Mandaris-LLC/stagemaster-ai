@@ -32,7 +32,7 @@ StageMasterAI is a modern, containerized web application that enables real estat
 
 ### Key Highlights
 
-- **LLM-Powered Intelligence**: Uses Gemini 2.0 Flash via liteLLM/OpenRouter for room analysis, furniture planning, and prompt generation
+- **LLM-Powered Intelligence**: Uses Gemini 3.0 Flash via liteLLM/OpenRouter for room analysis, furniture planning, and prompt generation, and Nano Banana Pro for image generation.
 - **Multi-Angle Consistency**: Supports staging multiple angles of the same room with consistent furniture placement
 - **Async Processing**: Robust job queue using Redis and RQ with real-time progress updates
 - **Local-First Storage**: MinIO (S3-compatible) for object storage, running entirely locally via Docker
