@@ -494,13 +494,13 @@ OPENROUTER_API_KEY=sk-xxxxx-your-openrouter-key
 3. **Start the Application**
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 4. **Initialize the Database**
 
 ```bash
-docker-compose exec backend alembic upgrade head
+docker compose exec backend alembic upgrade head
 ```
 
 5. **Access the Application**
@@ -543,26 +543,26 @@ npm run dev
 Create a new migration:
 
 ```bash
-docker-compose exec backend alembic revision -m "description"
+docker compose exec backend alembic revision -m "description"
 ```
 
 Apply migrations:
 
 ```bash
-docker-compose exec backend alembic upgrade head
+docker compose exec backend alembic upgrade head
 ```
 
 ### View Logs
 
 ```bash
 # Backend logs
-docker-compose logs backend
+docker compose logs backend
 
 # Worker logs
-docker-compose logs worker
+docker compose logs worker
 
 # All services
-docker-compose logs -f
+docker compose logs -f
 ```
 
 ---

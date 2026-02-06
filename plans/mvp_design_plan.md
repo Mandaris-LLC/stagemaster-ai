@@ -893,7 +893,7 @@ OPENROUTER_DEFAULT_MODEL=stability-ai/stable-diffusion-3-large
 
 ## 11. Docker Compose Configuration
 
-### Local Development docker-compose.yml
+### Local Development docker compose.yml
 
 ```yaml
 version: '3.8'
@@ -1018,27 +1018,27 @@ volumes:
 
 ```bash
 # Start all services
-docker-compose up -d
+docker compose up -d
 
 # View logs
-docker-compose logs -f
+docker compose logs -f
 
 # Stop all services
-docker-compose down
+docker compose down
 
 # Stop and remove volumes (fresh start)
-docker-compose down -v
+docker compose down -v
 
 # Initialize MinIO buckets
-docker-compose exec minio mc mb stage-uploads
-docker-compose exec minio mc mb stage-results
-docker-compose exec minio mc mb stage-thumbnails
+docker compose exec minio mc mb stage-uploads
+docker compose exec minio mc mb stage-results
+docker compose exec minio mc mb stage-thumbnails
 
 # Run database migrations
-docker-compose exec backend alembic upgrade head
+docker compose exec backend alembic upgrade head
 
 # Seed initial data
-docker-compose exec backend python -m app.seed_data
+docker compose exec backend python -m app.seed_data
 ```
 
 ## 12. TODO List for AI Coding Agent
@@ -1048,7 +1048,7 @@ docker-compose exec backend python -m app.seed_data
 - [ ] Set up Python virtual environment and install FastAPI dependencies
 - [ ] Initialize React + Vite + Tailwind frontend project
 - [ ] Configure Tailwind with photography theme colors and typography
-- [ ] Create docker-compose.yml with services: backend, frontend, postgres, redis, minio
+- [ ] Create docker compose.yml with services: backend, frontend, postgres, redis, minio
 - [ ] Configure environment files (.env.example, .env.local) for all services
 - [ ] Implement basic JWT authentication with single-user mode
 - [ ] Set up PostgreSQL database with async driver connection
@@ -1190,13 +1190,13 @@ cd stage-master
 cp .env.example .env.local
 
 # 3. Start all services
-docker-compose up -d
+docker compose up -d
 
 # 4. Wait for services to be healthy
-docker-compose ps
+docker compose ps
 
 # 5. Initialize database
-docker-compose exec backend alembic upgrade head
+docker compose exec backend alembic upgrade head
 
 # 6. Open application
 # Frontend: http://localhost:3000

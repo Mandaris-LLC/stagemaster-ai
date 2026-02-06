@@ -5,7 +5,7 @@ This document summarizes the recommended tech stack and deployment approach for 
 ## Overview
 - **Backend:** FastAPI (Python)
 - **Frontend:** React (recommended: Vite) with Tailwind CSS
-- **Deployment:** Containerized (Docker) with optional `docker-compose` for local dev and multi-stage builds for production. Kubernetes or cloud-native services recommended for production scale.
+- **Deployment:** Containerized (Docker) with optional `docker compose` for local dev and multi-stage builds for production. Kubernetes or cloud-native services recommended for production scale.
 
 ## Backend — FastAPI
 - Purpose: REST + WebSocket API server, high-performance Python async framework.
@@ -14,9 +14,9 @@ This document summarizes the recommended tech stack and deployment approach for 
 
 ```bash
 # from project root
-docker-compose up --build
+docker compose up --build
 # Or for development with hot reload:
-docker-compose up backend
+docker compose up backend
 ```
 
 ### Backend configuration (example)
@@ -55,9 +55,9 @@ CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 ```bash
 # dev (hot reload)
-docker-compose up frontend
+docker compose up frontend
 # build
-docker-compose build frontend
+docker compose build frontend
 ```
 
 ### Example frontend Dockerfile (multi-stage)
@@ -79,9 +79,9 @@ CMD ["nginx", "-g", "daemon off;"]
 ## Containerized Deployment
 - Use separate containers for backend and frontend.
 - Use environment variables and secrets for credentials and config.
-- For local development, `docker-compose.yml` can start both services and a database.
+- For local development, `docker compose.yml` can start both services and a database.
 
-### Minimal `docker-compose.yml` example
+### Minimal `docker compose.yml` example
 
 ```yaml
 version: '3.8'
@@ -124,7 +124,7 @@ volumes:
 /
 ├─ backend/        # FastAPI app, Dockerfile, requirements
 ├─ frontend/       # React + Tailwind app, Dockerfile
-├─ docker-compose.yml
+├─ docker compose.yml
 ├─ AGENTS.md       # this file
 ```
 
