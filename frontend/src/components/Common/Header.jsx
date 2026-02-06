@@ -27,15 +27,6 @@ const Header = () => {
                     >
                         Properties
                     </Link>
-                    <Link
-                        to="#"
-                        className="px-4 py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-md text-sm font-medium transition-colors"
-                    >
-                        Pricing
-                    </Link>
-                    <button className="ml-2 bg-accent hover:bg-accent-700 px-5 py-2.5 rounded-lg text-white text-sm font-semibold shadow-elevation-2 hover:shadow-elevation-3 transition-all active:scale-[0.98]">
-                        Sign In
-                    </button>
                 </nav>
             </div>
         </header>
