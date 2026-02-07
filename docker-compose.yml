@@ -64,8 +64,10 @@ services:
       - STORAGE_USE_SSL=${STORAGE_USE_SSL:-false}
       - STORAGE_USE_IAM=${STORAGE_USE_IAM:-false}
       - STORAGE_REGION=${STORAGE_REGION:-us-east-1}
-      - STORAGE_BUCKET=${STORAGE_BUCKET:-uploads}
       - STORAGE_PUBLIC_ENDPOINT=${STORAGE_PUBLIC_ENDPOINT:-localhost:9000}
+      - BUCKET_UPLOADS=${BUCKET_UPLOADS:-stage-uploads}
+      - BUCKET_RESULTS=${BUCKET_RESULTS:-stage-results}
+      - BUCKET_THUMBNAILS=${BUCKET_THUMBNAILS:-stage-thumbnails}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
       - LITELLM_ANALYSIS_MODEL=${LITELLM_ANALYSIS_MODEL:-openrouter/google/gemini-2.0-flash-exp:free}
       - LITELLM_GENERATION_MODEL=${LITELLM_GENERATION_MODEL:-openrouter/google/gemini-2.0-flash-exp:free}
@@ -89,8 +91,10 @@ services:
       - STORAGE_USE_SSL=${STORAGE_USE_SSL:-false}
       - STORAGE_USE_IAM=${STORAGE_USE_IAM:-false}
       - STORAGE_REGION=${STORAGE_REGION:-us-east-1}
-      - STORAGE_BUCKET=${STORAGE_BUCKET:-uploads}
       - STORAGE_PUBLIC_ENDPOINT=${STORAGE_PUBLIC_ENDPOINT:-localhost:9000}
+      - BUCKET_UPLOADS=${BUCKET_UPLOADS:-stage-uploads}
+      - BUCKET_RESULTS=${BUCKET_RESULTS:-stage-results}
+      - BUCKET_THUMBNAILS=${BUCKET_THUMBNAILS:-stage-thumbnails}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
       - LITELLM_ANALYSIS_MODEL=${LITELLM_ANALYSIS_MODEL:-openrouter/google/gemini-2.0-flash-exp:free}
       - LITELLM_GENERATION_MODEL=${LITELLM_GENERATION_MODEL:-openrouter/google/gemini-2.0-flash-exp:free}
