@@ -2,18 +2,13 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     container_name: stage-frontend
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend:/app
     environment:
-      - VITE_API_BASE_URL=http://localhost:8000/api/v1
-    depends_on:
-      - backend
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8000/api/v1}
 
   db:
+    profiles: ["local"]
     image: postgres:15-alpine
     container_name: stage-db
     environment:
@@ -31,6 +26,7 @@ services:
       retries: 5
 
   redis:
+    profiles: ["local"]
     image: redis:7-alpine
     container_name: stage-redis
     ports:
@@ -42,6 +38,7 @@ services:
       retries: 5
 
   minio:
+    profiles: ["local"]
     image: minio/minio
     container_name: stage-minio
     ports:
@@ -57,29 +54,19 @@ services:
   backend:
     build: ./backend
     container_name: stage-backend
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./backend:/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers ${WORKERS:-4}
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/stage_db
-      - REDIS_URL=redis://redis:6379/0
-      - STORAGE_ENDPOINT=minio:9000
-      - STORAGE_ACCESS_KEY=minioadmin
-      - STORAGE_SECRET_KEY=minioadmin
-      - STORAGE_USE_SSL=false
-      - STORAGE_PUBLIC_ENDPOINT=localhost:9000
+      - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://postgres:postgres@db:5432/stage_db}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - STORAGE_ENDPOINT=${STORAGE_ENDPOINT:-minio:9000}
+      - STORAGE_ACCESS_KEY=${STORAGE_ACCESS_KEY:-minioadmin}
+      - STORAGE_SECRET_KEY=${STORAGE_SECRET_KEY:-minioadmin}
+      - STORAGE_USE_SSL=${STORAGE_USE_SSL:-false}
+      - STORAGE_BUCKET=${STORAGE_BUCKET:-uploads}
+      - STORAGE_PUBLIC_ENDPOINT=${STORAGE_PUBLIC_ENDPOINT:-localhost:9000}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
       - LITELLM_ANALYSIS_MODEL=${LITELLM_ANALYSIS_MODEL:-openrouter/google/gemini-2.0-flash-exp:free}
       - LITELLM_GENERATION_MODEL=${LITELLM_GENERATION_MODEL:-openrouter/google/gemini-2.0-flash-exp:free}
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      minio:
-        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
       interval: 10s
@@ -90,27 +77,19 @@ services:
   worker:
     build: ./backend
     container_name: stage-worker
-    command: rq worker staging --url redis://redis:6379/0
-    volumes:
-      - ./backend:/app
+    command: rq worker staging --url ${REDIS_URL:-redis://redis:6379/0}
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/stage_db
-      - REDIS_URL=redis://redis:6379/0
-      - STORAGE_ENDPOINT=minio:9000
-      - STORAGE_ACCESS_KEY=minioadmin
-      - STORAGE_SECRET_KEY=minioadmin
-      - STORAGE_USE_SSL=false
-      - STORAGE_PUBLIC_ENDPOINT=localhost:9000
+      - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://postgres:postgres@db:5432/stage_db}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - STORAGE_ENDPOINT=${STORAGE_ENDPOINT:-minio:9000}
+      - STORAGE_ACCESS_KEY=${STORAGE_ACCESS_KEY:-minioadmin}
+      - STORAGE_SECRET_KEY=${STORAGE_SECRET_KEY:-minioadmin}
+      - STORAGE_USE_SSL=${STORAGE_USE_SSL:-false}
+      - STORAGE_BUCKET=${STORAGE_BUCKET:-uploads}
+      - STORAGE_PUBLIC_ENDPOINT=${STORAGE_PUBLIC_ENDPOINT:-localhost:9000}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
       - LITELLM_ANALYSIS_MODEL=${LITELLM_ANALYSIS_MODEL:-openrouter/google/gemini-2.0-flash-exp:free}
       - LITELLM_GENERATION_MODEL=${LITELLM_GENERATION_MODEL:-openrouter/google/gemini-2.0-flash-exp:free}
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      minio:
-        condition: service_started
 
 volumes:
   postgres_data:

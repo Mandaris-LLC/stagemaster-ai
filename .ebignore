@@ -1,0 +1,40 @@
+# Elastic Beanstalk ignore file
+# These files won't be included in the deployment package
+
+# Git
+.git/
+.gitignore
+
+# Local development
+docker-compose.local.yml
+.env
+.env.local
+.env.aws
+.env.aws.example
+scripts/dev.sh
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# Node
+node_modules/
+.npm/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db

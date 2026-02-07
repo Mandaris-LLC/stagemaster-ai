@@ -1,0 +1,19 @@
+# AWS Production overrides
+# Usage: docker compose -f docker-compose.yml -f docker-compose.aws.yml --env-file .env.aws up -d
+# EB's built-in nginx reverse proxy handles routing - via .platform/nginx/
+
+services:
+  frontend:
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api/v1}
+    restart: always
+
+  backend:
+    ports:
+      - "8000:8000"
+    restart: always
+
+  worker:
+    restart: always
