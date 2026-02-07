@@ -5,12 +5,21 @@ from app.core.config import settings
 
 class StorageService:
     def __init__(self):
-        self.client = Minio(
-            settings.STORAGE_ENDPOINT,
-            access_key=settings.STORAGE_ACCESS_KEY,
-            secret_key=settings.STORAGE_SECRET_KEY,
-            secure=settings.STORAGE_USE_SSL
-        )
+        if settings.STORAGE_USE_IAM:
+            # Use IAM instance profile - omit credentials to use AWS default chain
+            self.client = Minio(
+                settings.STORAGE_ENDPOINT,
+                secure=settings.STORAGE_USE_SSL,
+                region=settings.STORAGE_REGION
+            )
+        else:
+            # Use explicit credentials (for local MinIO)
+            self.client = Minio(
+                settings.STORAGE_ENDPOINT,
+                access_key=settings.STORAGE_ACCESS_KEY,
+                secret_key=settings.STORAGE_SECRET_KEY,
+                secure=settings.STORAGE_USE_SSL
+            )
         self._ensure_buckets()
 
     def _ensure_buckets(self):

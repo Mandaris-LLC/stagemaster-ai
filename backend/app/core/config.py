@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     STORAGE_ACCESS_KEY: str = "minioadmin"
     STORAGE_SECRET_KEY: str = "minioadmin"
     STORAGE_USE_SSL: bool = False
+    STORAGE_USE_IAM: bool = False  # Use IAM instance profile for AWS
+    STORAGE_REGION: str = "us-east-1"
     STORAGE_PUBLIC_ENDPOINT: str = "localhost:9000"
     
     BUCKET_UPLOADS: str = "stage-uploads"
