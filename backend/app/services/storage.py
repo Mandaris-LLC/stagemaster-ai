@@ -1,26 +1,36 @@
-import io
 import json
-from minio import Minio
+import boto3
+from botocore.config import Config
 from app.core.config import settings
 
 class StorageService:
     def __init__(self):
+        boto_config = Config(
+            signature_version='s3v4',
+            region_name=settings.STORAGE_REGION,
+        )
+
         if settings.STORAGE_USE_IAM:
-            # Use IAM instance profile - omit credentials to use AWS default chain
-            self.client = Minio(
-                settings.STORAGE_ENDPOINT,
-                secure=settings.STORAGE_USE_SSL,
-                region=settings.STORAGE_REGION
+            # Use IAM instance profile - boto3 picks up credentials automatically
+            self.client = boto3.client(
+                's3',
+                region_name=settings.STORAGE_REGION,
+                config=boto_config,
             )
         else:
             # Use explicit credentials (for local MinIO)
-            self.client = Minio(
-                settings.STORAGE_ENDPOINT,
-                access_key=settings.STORAGE_ACCESS_KEY,
-                secret_key=settings.STORAGE_SECRET_KEY,
-                secure=settings.STORAGE_USE_SSL
+            protocol = "https" if settings.STORAGE_USE_SSL else "http"
+            endpoint_url = f"{protocol}://{settings.STORAGE_ENDPOINT}"
+            self.client = boto3.client(
+                's3',
+                endpoint_url=endpoint_url,
+                aws_access_key_id=settings.STORAGE_ACCESS_KEY,
+                aws_secret_access_key=settings.STORAGE_SECRET_KEY,
+                region_name=settings.STORAGE_REGION,
+                config=boto_config,
             )
-        self._ensure_buckets()
+
+        #self._ensure_buckets()
 
     def _ensure_buckets(self):
         buckets = [
@@ -29,11 +39,16 @@ class StorageService:
             settings.BUCKET_THUMBNAILS
         ]
         public_buckets = [settings.BUCKET_RESULTS, settings.BUCKET_THUMBNAILS, settings.BUCKET_UPLOADS]
-        
+
+        existing = {b['Name'] for b in self.client.list_buckets().get('Buckets', [])}
+
         for bucket in buckets:
-            if not self.client.bucket_exists(bucket):
-                self.client.make_bucket(bucket)
-            
+            if bucket not in existing:
+                self.client.create_bucket(
+                    Bucket=bucket,
+                    CreateBucketConfiguration={'LocationConstraint': settings.STORAGE_REGION}
+                ) if settings.STORAGE_REGION != 'us-east-1' else self.client.create_bucket(Bucket=bucket)
+
             if bucket in public_buckets:
                 policy = {
                     "Version": "2012-10-17",
@@ -46,38 +61,27 @@ class StorageService:
                         }
                     ]
                 }
-                self.client.set_bucket_policy(bucket, json.dumps(policy))
+                self.client.put_bucket_policy(Bucket=bucket, Policy=json.dumps(policy))
 
     async def upload_file(self, bucket: str, object_name: str, data: bytes, content_type: str):
-        data_stream = io.BytesIO(data)
+        print(f"Uploading to bucket: {bucket}, object: {object_name}, content_type: {content_type}")
         self.client.put_object(
-            bucket,
-            object_name,
-            data_stream,
-            length=len(data),
-            content_type=content_type
+            Bucket=bucket,
+            Key=object_name,
+            Body=data,
+            ContentType=content_type,
         )
         return self.get_url(bucket, object_name)
 
     async def delete_file(self, bucket: str, object_name: str):
-        self.client.remove_object(bucket, object_name)
+        self.client.delete_object(Bucket=bucket, Key=object_name)
 
     def get_url(self, bucket: str, object_name: str):
-        # For local development with MinIO in Docker, we might need to handle external vs internal URLs
-        # For now, returning a direct URL. In production, this would be a signed URL or CDN URL.
         return f"http://{settings.STORAGE_PUBLIC_ENDPOINT}/{bucket}/{object_name}"
 
     def get_object_data(self, bucket: str, object_name: str) -> bytes:
-        """
-        Retrieves object data from MinIO.
-        """
-        response = None
-        try:
-            response = self.client.get_object(bucket, object_name)
-            return response.read()
-        finally:
-            if response:
-                response.close()
-                response.release_conn()
+        """Retrieves object data from S3."""
+        response = self.client.get_object(Bucket=bucket, Key=object_name)
+        return response['Body'].read()
 
 storage_service = StorageService()

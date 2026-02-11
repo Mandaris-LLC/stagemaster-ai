@@ -17,6 +17,8 @@ async def create_job(
     # Dummy user ID for MVP
     user_id = uuid.UUID(settings.DEFAULT_USER_ID)
     
+    print(f"Received job creation request for image_id: {job_in.image_id}, room_type: {job_in.room_type}")
+    
     db_job = Job(
         id=uuid.uuid4(),
         user_id=user_id,
@@ -33,6 +35,7 @@ async def create_job(
     db.add(db_job)
     await db.commit()
     await db.refresh(db_job)
+    
     
     # Queue the job
     queue_staging_job(str(db_job.id))

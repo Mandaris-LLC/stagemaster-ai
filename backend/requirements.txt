@@ -7,7 +7,7 @@ pydantic==2.6.1
 pydantic-settings==2.1.0
 redis==5.0.1
 rq==1.16.1
-minio
+boto3
 python-multipart==0.0.9
 aiofiles==23.2.1
 requests==2.31.0
