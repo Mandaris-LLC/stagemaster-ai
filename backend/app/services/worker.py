@@ -6,6 +6,7 @@ redis_conn = Redis.from_url(settings.REDIS_URL)
 job_queue = Queue("staging", connection=redis_conn)
 
 def queue_staging_job(job_id: str):
+    print(f"Queueing staging job with ID: {job_id}")
     # This will be imported in the routes to queue a job
     from app.services.generation import process_staging_job
     job = job_queue.enqueue(
