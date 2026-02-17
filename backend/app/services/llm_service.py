@@ -97,16 +97,49 @@ async def analyze_room(image_url: str, reference_image_url: str = None, referenc
     prompt = f"""
     Analyze the uploaded interior photo for virtual staging.
     {consistency_instruction}
-    
-    TASK: Provide a detailed architectural analysis of this room.
-    1. Identify all surfaces (floor, walls, ceiling) and their materials.
-    2. Identify all architectural features (windows, doors, paths of travel).
-    3. Identify all BUILT-IN FIXTURES (ceiling lights, fans, wall outlets, vents, switches).
-    4. CRITICAL: Identify any OPEN or VISIBLE CLOSETS. Note if the interior is visible, its size, and any existing shelves or rods.
-    5. Estimate room dimensions and lighting direction.
-    6. CRITICAL: Identify any large, empty wall surfaces that are prominent in the view. Note their size and position (e.g., "Large blank wall on the left, behind the intended sofa area").
-    
-    IMPORTANT: Focus on the "bones" of the room. This analysis will be used to ensure that subsequent staging steps do not alter the room's layout or fixtures.
+
+    TASK: Produce a precise architectural blueprint of this room. This analysis is the GROUND TRUTH that all subsequent staging steps MUST obey — any deviation from it is a critical failure.
+
+    1. ROOM GEOMETRY & PERSPECTIVE:
+       - Describe the exact camera angle (eye-level, elevated, corner shot, straight-on, etc.).
+       - Map every wall visible in frame: label them (e.g., Left Wall, Back Wall, Right Wall) and note their angles relative to the camera.
+       - Note the ceiling height, floor plane angle, and any perspective vanishing points.
+
+    2. DOORS & OPENINGS (CRITICAL — these must NEVER be blocked, moved, or removed):
+       - List EVERY door, doorway, archway, and opening visible or partially visible.
+       - For each: note its EXACT position (e.g., "centered on the back wall", "far-right of the left wall"), its type (hinged, sliding, pocket, open archway), whether it is open or closed, and its swing direction if visible.
+       - Note any hallways or passageways visible through openings.
+
+    3. WINDOWS:
+       - List every window with its exact position, size relative to the wall, and type (single-pane, double-hung, sliding, etc.).
+       - Note what is visible through each window (exterior light, trees, sky, neighboring structure).
+
+    4. BUILT-IN FIXTURES (must remain untouched):
+       - Ceiling: lights, fans, sprinklers, smoke detectors, recessed lighting, beams.
+       - Walls: outlets, switches, vents, thermostats, intercoms, sconces.
+       - Floor: vents, floor outlets, transitions between flooring materials.
+
+    5. SURFACES & MATERIALS:
+       - Floor material and color (hardwood, tile, carpet, etc.).
+       - Wall finish and color for each wall.
+       - Ceiling finish.
+       - Any trim, baseboards, crown molding, or wainscoting.
+
+    6. CLOSETS & BUILT-INS:
+       - Identify any open or visible closets. Note if the interior is visible, its size, and any existing shelves or rods.
+       - Note built-in shelving, niches, or cabinetry.
+
+    7. SPATIAL ZONES & TRAFFIC FLOW:
+       - Identify clear paths of travel between doors/openings — these corridors MUST remain unobstructed.
+       - Note any awkward angles, alcoves, or nooks.
+       - Identify large empty wall surfaces and their approximate dimensions.
+
+    8. LIGHTING:
+       - Direction and quality of natural light (which windows, time of day estimate).
+       - Existing artificial light sources and their warm/cool tone.
+       - Shadow patterns on walls and floor.
+
+    IMPORTANT: This analysis defines the IMMUTABLE room shell. Every wall angle, door position, window location, and fixture placement recorded here is LOCKED. Subsequent staging steps must treat this as an inviolable constraint map.
     """
     
     try:
@@ -171,22 +204,59 @@ async def plan_furniture_placement(
     prompt = f"""
     Based on the following room analysis:
     {analysis}
-    
+
     Room Type: {room_type}
     Design Style: {style_preset}
     {consistency_hint}
-    
-    Provide a detailed furniture placement plan for the TARGET IMAGE. 
-    If a reference image is provided, your plan MUST be a logical continuation of the staging seen there.
-    List specific furniture items, their positions, and how they should look.
+
+    TASK: Create a furniture placement plan that stages this room while treating the room's architecture as SACRED and IMMUTABLE.
+
+    ===== ABSOLUTE CONSTRAINTS (VIOLATION = FAILURE) =====
+
+    1. DOOR & OPENING PRESERVATION:
+       - Every door, doorway, and archway identified in the analysis MUST remain fully visible and completely unobstructed.
+       - NO furniture may be placed in front of, partially blocking, or within the swing arc of any door.
+       - Traffic corridors between doors/openings must remain clear (minimum 36" / 90cm passage).
+
+    2. WINDOW PRESERVATION:
+       - No furniture may block or obscure any window, even partially.
+       - Furniture placed beneath windows must not extend above the window sill.
+
+    3. FIXTURE PRESERVATION:
+       - All ceiling fixtures (lights, fans, vents) must remain completely visible and unobstructed.
+       - All wall fixtures (outlets, switches, vents, thermostats) must remain accessible.
+       - No tall furniture may be placed directly under ceiling fans.
+
+    4. WALL & ANGLE PRESERVATION:
+       - Furniture must follow the exact wall angles shown in the analysis. If a wall is angled, furniture against it must match that angle.
+       - Do NOT suggest any structural modifications (removing walls, adding built-ins, changing floor plan).
+
+    5. PERSPECTIVE PRESERVATION:
+       - All furniture must be described from the EXACT camera angle shown in the target image.
+       - Items closer to camera appear larger; items further appear smaller — respect this depth.
+
+    ===== FURNITURE PLAN =====
+
+    For each piece of furniture, specify:
+    - Item name and style (matching {style_preset})
+    - Exact position (which wall, distance from corners/doors, depth in room)
+    - Orientation and facing direction
+    - Approximate dimensions
+    - How it relates to nearby architectural features (e.g., "centered on back wall, 2ft left of the door")
+
     {decor_instruction}
     {tv_instruction}
-    
-    CLOSET STAGING: If an open or visible closet was identified in the analysis, you MUST include a staging plan for its interior. This should include organized clothing on matching hangers, neatly folded items on shelves, and stylish storage bins or baskets to make it look functional and attractive.
-    
-    IMPORTANT ARCHITECTURAL LOCKDOWN: The furniture arrangement must respect the existing room layout, doors, windows, and traffic flow. 
-    Do not suggest removing, altering, or obstructing any architectural features or existing fixtures (light fixtures, fans, vents, windows).
-    The goal is to furnish the room AS IS, matching the reference view perfectly without changing a single structural line.
+
+    CLOSET STAGING: If an open or visible closet was identified in the analysis, include a staging plan for its interior with organized clothing on matching hangers, neatly folded items on shelves, and stylish storage accessories.
+
+    ===== FINAL VERIFICATION CHECKLIST =====
+    Before finishing, mentally verify:
+    - [ ] Every door identified in the analysis is still fully visible and unblocked
+    - [ ] Every window is unobstructed
+    - [ ] All ceiling fixtures remain visible
+    - [ ] Traffic paths between all openings are clear
+    - [ ] No furniture floats, clips through walls, or defies the room's perspective
+    - [ ] The room's geometry (wall angles, corners, ceiling lines) is unchanged
     """
     
     try:
@@ -251,33 +321,67 @@ async def generate_staged_image_prompt(
     tv_instruction = "Include a non-wall mounted flat screen TV on a professional stand or media console, appropriately placed for the room's purpose and layout." if include_tv else ""
 
     prompt = f"""
-    You are a professional architectural photographer and interior designer.
-    Create a highly detailed, photorealistic prompt for generating a virtually staged version of this room.
-    
+    You are a professional architectural photographer and virtual staging specialist.
+    Create a highly detailed, photorealistic prompt for an image generation model to stage this room.
+
     {consistency_instruction}
-    
-    CRITICAL PERSPECTIVE LOCKDOWN:
-    1. The goal is to VIRTUAL STAGE the EXISTING room pixels.
-    2. You MUST preserve the 100% EXACT structure and PIXEL POSITION of the room's architecture (walls, ceiling, floor lines, windows, doors) from the Target Image.
-    3. You MUST preserve the EXACT camera angle and lens perspective of the Target Image. Do NOT move the camera or warp the background to match the reference image.
-    4. You MUST preserve the current natural lighting direction, shadows, and reflections exactly as they appear in the Target Image.
-    5. {wb_instruction}
-    6. {decor_instruction} {tv_instruction} DO NOT remove or alter architectural elements.
-    7. CLOSET STAGING: If a closet is visible or open, render it as fully staged with organized, high-end clothing, matching wooden hangers, and neat storage accessories.
-    8. CRITICAL: Do NOT remove, modify, or obscure any existing room objects, fixtures, or layout elements such as light fixtures, ceiling fans, wall switches, vents, or built-ins. They must remain exactly as they are.
-    9. THE BACKGROUND IS SACRED: Your task is to overlay furniture into the room EXACTLY as it is, as if you are physically placing items into the existing space. The architectural background of the Target Image must remain pixel-identical.
-    
+
+    ===== ROOM PRESERVATION PROTOCOL (NON-NEGOTIABLE) =====
+
+    The following elements from the Target Image are FROZEN — they must appear in the output at the EXACT same pixel positions, angles, and proportions:
+
+    GEOMETRY LOCK:
+    - Every wall edge, corner, and angle must remain pixel-identical to the Target Image.
+    - The ceiling line, floor plane, and all perspective vanishing points are immutable.
+    - The camera position, height, tilt, focal length, and lens distortion must NOT change.
+
+    DOOR & OPENING LOCK:
+    - Every door, doorway, and archway must remain at its exact position, size, and state (open/closed).
+    - No furniture may appear in front of or overlapping any door or opening.
+    - Hallways and passages visible through openings must remain visible.
+
+    WINDOW LOCK:
+    - Every window must remain at its exact position and size.
+    - The view through each window must be preserved.
+    - No furniture may obscure any part of any window.
+
+    FIXTURE LOCK:
+    - All ceiling fixtures (lights, fans, sprinklers, vents) must remain visible and unchanged.
+    - All wall fixtures (outlets, switches, thermostats, sconces) must remain visible and unchanged.
+    - No furniture may be placed over or in front of any fixture.
+
+    LIGHTING LOCK:
+    - {wb_instruction}
+    - Natural light direction, shadow angles, and shadow intensity must match the Target Image exactly.
+    - Furniture shadows must be consistent with the existing light sources in the room.
+
+    ===== STAGING INSTRUCTIONS =====
+
+    1. OVERLAY ONLY: Your task is to composite furniture INTO the existing room photograph. Think of it as physically placing real furniture into the real room — the room itself does not change.
+    2. {decor_instruction} {tv_instruction}
+    3. CLOSET STAGING: If a closet is visible or open, stage its interior with organized high-end clothing on matching wooden hangers, neatly folded items, and stylish storage accessories.
+    4. DEPTH & SCALE: Furniture must respect the room's perspective — items closer to camera are larger, items further away are smaller. Furniture must sit flat on the floor plane with correct shadow contact.
+    5. MATERIAL REALISM: Render fabric textures, wood grain, metal reflections, and glass transparency with photorealistic quality matching the room's existing lighting.
+
+    ===== SOURCE DATA =====
+
     Original Room Analysis:
     {analysis}
-    
+
     Furniture Plan:
     {placement_plan}
-    
+
     Style: {style_preset}
-    
-    Produce a single paragraph prompt that includes lighting details, texture descriptions, specific camera settings, and photorealistic keywords.
-    The prompt should explicitly consist of instructions to the generation model to "render the following furniture into the provided room image without changing the room's geometry or perspective".
-    
+
+    ===== OUTPUT FORMAT =====
+
+    Produce a SINGLE PARAGRAPH prompt for the image generation model. The prompt must:
+    - Begin with an explicit instruction: "Edit this room photograph by rendering the following furniture into the existing space WITHOUT altering the room's architecture, camera angle, wall positions, door locations, window placements, or any structural element."
+    - Include specific furniture descriptions with materials, colors, and exact positions from the plan.
+    - Include photorealistic rendering keywords (8K, architectural photography, natural lighting, ray-traced shadows).
+    - Include specific camera/lens terms that match the original photo's perspective.
+    - End with: "The room's walls, doors, windows, ceiling, floor, and all fixtures must remain at their exact original pixel positions."
+
     Original Image URL for reference: {original_image_url}
     """
     
@@ -333,7 +437,7 @@ async def generate_image(prompt: str, original_image_url: str = None, fix_white_
         
         # 1. Reference Image (Context ONLY) - FIRST
         if reference_image_url:
-            messages_content.append({"type": "text", "text": f"\n\nCONSISTENCY REFERENCE (Staged Angle):\nThis image shows the EXISTING furniture and style from another angle of the same room. \nUse this ONLY to identify the inventory of items to be placed (materials, styles, exact objects)."})
+            messages_content.append({"type": "text", "text": "\n\nCONSISTENCY REFERENCE (Staged Angle):\nThis image shows the EXISTING furniture and style from another angle of the same room.\nUse this ONLY to identify the inventory of items to be placed (materials, styles, exact objects).\nDo NOT copy the camera angle, wall positions, or room geometry from this reference."})
             ref_media_type, ref_image_base64, _, _ = await _fetch_and_encode_image(reference_image_url)
             messages_content.append(
                 {"type": "image_url", "image_url": {"url": f"data:{ref_media_type};base64,{ref_image_base64}"}}
@@ -341,23 +445,35 @@ async def generate_image(prompt: str, original_image_url: str = None, fix_white_
 
         # 2. Target Image (THE MASTER BACKGROUND) - SECOND & FINAL
         if original_image_url:
-             messages_content.append({"type": "text", "text": "THE TARGET IMAGE (Background to be Edited):\nThis is the photo you are virtually staging. Treat this as the absolute, immutable background. Do NOT change its camera angle, perspective, or a single pixel of the architecture (walls, windows, fixtures)."})
+             messages_content.append({"type": "text", "text": "THE TARGET IMAGE (IMMUTABLE BACKGROUND):\nThis is the room photograph you are editing. The following are LOCKED and must appear at their EXACT pixel positions in your output:\n- Every wall edge, corner, and angle\n- Every door, doorway, and archway (position, size, open/closed state)\n- Every window (position, size, view through it)\n- All ceiling fixtures (lights, fans, vents)\n- All wall fixtures (outlets, switches, thermostats)\n- The camera angle, height, tilt, and lens perspective\n- The floor plane and ceiling line\nDo NOT move, warp, resize, crop, or alter ANY of these elements."})
              media_type, image_base64, width, height = await _fetch_and_encode_image(original_image_url)
              messages_content.append(
                  {"type": "image_url", "image_url": {"url": f"data:{media_type};base64,{image_base64}"}}
              )
-             
+
              # Add instructions for this image
-             extra_text = f"\n\nEDIT TASK: OVERLAY STAGING\n{prompt}"
-             
+             extra_text = f"\n\nEDIT TASK: OVERLAY FURNITURE INTO THIS EXACT ROOM\n{prompt}"
+             extra_text += "\n\nROOM PRESERVATION RULES:"
+             extra_text += "\n- Walls must remain at their exact angles and positions"
+             extra_text += "\n- Doors and doorways must remain fully visible and unblocked by furniture"
+             extra_text += "\n- Windows must remain fully visible and unobscured"
+             extra_text += "\n- All ceiling and wall fixtures must remain visible"
+             extra_text += "\n- Furniture must sit on the existing floor plane with correct perspective"
+             extra_text += "\n- Furniture shadows must match the room's existing light direction"
+
              if width > 0 and height > 0:
-                 extra_text += f"\n\nIMPORTANT: The output image MUST maintain the exact {width}x{height} resolution."
-             
+                 extra_text += f"\n\nRESOLUTION LOCK: Output MUST be exactly {width}x{height} pixels."
+
              if not fix_white_balance:
-                 extra_text += "\n\nCRITICAL: PRESERVE the original white balance of this Target Image."
-             
-             extra_text += "\n\nFINAL CHECK: The generated image must be this Target Image with the furniture added. Any change to the camera height, tilt, or room's geometry is a CRITICAL FAILURE."
-             
+                 extra_text += "\n\nWHITE BALANCE LOCK: Preserve the original color temperature exactly."
+
+             extra_text += "\n\nFAILURE CONDITIONS: Any of the following in the output means the image is REJECTED:"
+             extra_text += "\n- A door or doorway has moved, disappeared, or is blocked by furniture"
+             extra_text += "\n- A wall angle or corner position has shifted"
+             extra_text += "\n- A window has moved or is obscured"
+             extra_text += "\n- The camera angle, height, or perspective has changed"
+             extra_text += "\n- Any ceiling or wall fixture is missing or altered"
+
              messages_content.append({"type": "text", "text": extra_text})
         
         payload = {
