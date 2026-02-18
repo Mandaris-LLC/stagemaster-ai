@@ -434,7 +434,8 @@ async def generate_image(prompt: str, original_image_url: str = None, fix_white_
             model = model.replace("openrouter/", "")
 
         messages_content = []
-        
+        orig_width, orig_height = 0, 0
+
         # 1. Reference Image (Context ONLY) - FIRST
         if reference_image_url:
             messages_content.append({"type": "text", "text": "\n\nCONSISTENCY REFERENCE (Staged Angle):\nThis image shows the EXISTING furniture and style from another angle of the same room.\nUse this ONLY to identify the inventory of items to be placed (materials, styles, exact objects).\nDo NOT copy the camera angle, wall positions, or room geometry from this reference."})
@@ -447,6 +448,7 @@ async def generate_image(prompt: str, original_image_url: str = None, fix_white_
         if original_image_url:
              messages_content.append({"type": "text", "text": "THE TARGET IMAGE (IMMUTABLE BACKGROUND):\nThis is the room photograph you are editing. The following are LOCKED and must appear at their EXACT pixel positions in your output:\n- Every wall edge, corner, and angle\n- Every door, doorway, and archway (position, size, open/closed state)\n- Every window (position, size, view through it)\n- All ceiling fixtures (lights, fans, vents)\n- All wall fixtures (outlets, switches, thermostats)\n- The camera angle, height, tilt, and lens perspective\n- The floor plane and ceiling line\nDo NOT move, warp, resize, crop, or alter ANY of these elements."})
              media_type, image_base64, width, height = await _fetch_and_encode_image(original_image_url)
+             orig_width, orig_height = width, height
              messages_content.append(
                  {"type": "image_url", "image_url": {"url": f"data:{media_type};base64,{image_base64}"}}
              )
@@ -525,13 +527,25 @@ async def generate_image(prompt: str, original_image_url: str = None, fix_white_
         if image_url.startswith("data:"):
             # Format: data:image/png;base64,.....
             header, encoded = image_url.split(",", 1)
-            return base64.b64decode(encoded)
+            generated_bytes = base64.b64decode(encoded)
         else:
             # It's a regular URL, download it
             async with httpx.AsyncClient() as client:
                 img_resp = await client.get(image_url)
                 img_resp.raise_for_status()
-                return img_resp.content
+                generated_bytes = img_resp.content
+
+        # Resize output to match the original image dimensions
+        if orig_width > 0 and orig_height > 0:
+            with Image.open(io.BytesIO(generated_bytes)) as gen_img:
+                if gen_img.size != (orig_width, orig_height):
+                    logger.info(f"Resizing generated image from {gen_img.size} to ({orig_width}, {orig_height})")
+                    gen_img = gen_img.resize((orig_width, orig_height), Image.Resampling.LANCZOS)
+                buffer = io.BytesIO()
+                gen_img.save(buffer, format="JPEG")
+                generated_bytes = buffer.getvalue()
+
+        return generated_bytes
 
     except Exception as e:
         logger.error(f"Error generating image: {str(e)}")
