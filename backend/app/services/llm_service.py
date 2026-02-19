@@ -422,7 +422,7 @@ async def generate_staged_image_prompt(
         logger.error(f"Error calling LiteLLM for generation prompt: {str(e)}")
         raise
 
-async def generate_image(prompt: str, original_image_url: str | None = None, fix_white_balance: bool = False, reference_image_url: str | None = None) -> bytes:
+async def generate_image_openrouter(prompt: str, original_image_url: str | None = None, fix_white_balance: bool = False, reference_image_url: str | None = None) -> bytes:
     """
     Generates an image using the configured image generation model.
     Returns the raw binary content of the generated image.
@@ -560,3 +560,127 @@ async def generate_image(prompt: str, original_image_url: str | None = None, fix
     except Exception as e:
         logger.error(f"Error generating image: {str(e)}")
         raise
+
+async def generate_image_vertex(prompt: str, original_image_url: str | None = None, fix_white_balance: bool = False, reference_image_url: str | None = None) -> bytes:
+    """
+    Generates an image using Vertex AI Imagen with RawReferenceImage support.
+    Returns the raw binary content of the generated image.
+    """
+    try:
+        import json
+        import vertexai
+        from vertexai.preview.vision_models import (
+            Image as VertexImage,
+            ImageGenerationModel,
+            RawReferenceImage,
+        )
+
+        credentials = None
+        projectId = settings.GOOGLE_CLOUD_PROJECT
+        if settings.GOOGLE_SERVICE_ACCOUNT_JSON:
+            from google.oauth2 import service_account
+            json_creds = json.loads(settings.GOOGLE_SERVICE_ACCOUNT_JSON)
+            projectId = json_creds.get("project_id", projectId)
+            credentials = service_account.Credentials.from_service_account_info(
+                json_creds,
+                scopes=["https://www.googleapis.com/auth/cloud-platform"],
+            )
+
+        vertexai.init(
+            project=projectId,
+            location=settings.GOOGLE_CLOUD_LOCATION,
+            credentials=credentials,
+        )
+
+        generation_model = ImageGenerationModel.from_pretrained(settings.VERTEX_IMAGEN_MODEL)
+
+        reference_images = []
+        orig_width, orig_height = 0, 0
+        ref_id = 1
+
+        # 1. Original room image (THE MASTER BACKGROUND) - primary reference
+        if original_image_url:
+            _, image_base64, orig_width, orig_height = await _fetch_and_encode_image(original_image_url)
+            reference_images.append(RawReferenceImage(
+                reference_id=ref_id,
+                image=VertexImage(image_bytes=base64.b64decode(image_base64)),
+            ))
+            ref_id += 1
+
+        # 2. Consistency reference (another angle of same room, if provided)
+        if reference_image_url:
+            _, ref_image_base64, _, _ = await _fetch_and_encode_image(reference_image_url)
+            reference_images.append(RawReferenceImage(
+                reference_id=ref_id,
+                image=VertexImage(image_bytes=base64.b64decode(ref_image_base64)),
+            ))
+
+        # Build full prompt
+        full_prompt = prompt
+
+        if original_image_url:
+            full_prompt += "\n\nTHE TARGET IMAGE (IMMUTABLE BACKGROUND):"
+            full_prompt += "\nThis is the room photograph you are editing. The following are LOCKED and must appear at their EXACT pixel positions in your output:"
+            full_prompt += "\n- Every wall edge, corner, and angle"
+            full_prompt += "\n- Every door, doorway, and archway (position, size, open/closed state)"
+            full_prompt += "\n- Every window (position, size, view through it)"
+            full_prompt += "\n- All ceiling fixtures (lights, fans, vents)"
+            full_prompt += "\n- All wall fixtures (outlets, switches, thermostats)"
+            full_prompt += "\n- The camera angle, height, tilt, and lens perspective"
+            full_prompt += "\n- The floor plane and ceiling line"
+            full_prompt += "\nDo NOT move, warp, resize, crop, or alter ANY of these elements."
+
+            if not fix_white_balance:
+                full_prompt += "\n\nWHITE BALANCE LOCK: Preserve the original color temperature exactly."
+
+        if reference_image_url:
+            full_prompt += "\n\nCONSISTENCY REFERENCE (Staged Angle): The second reference image shows existing furniture and style from another angle of the same room. Use it ONLY to match materials, styles, and object inventory. Do NOT copy its camera angle, wall positions, or room geometry."
+
+        logger.info(f"Calling Vertex AI Imagen ({settings.VERTEX_IMAGEN_MODEL}) for image generation")
+
+        possible_aspect_ratios = ["1:1", "16:9", "9:16", "4:3", "3:4"]
+        if orig_width > 0 and orig_height > 0:
+            target_ratio = orig_width / orig_height
+            aspect_ratio = min(
+                possible_aspect_ratios,
+                key=lambda r: abs((int(r.split(":")[0]) / int(r.split(":")[1])) - target_ratio)
+            )
+        else:
+            aspect_ratio = "1:1"
+            
+        logger.info(f"Selected aspect ratio {aspect_ratio} for original size {orig_width}x{orig_height}")
+
+        loop = asyncio.get_event_loop()
+        images = await loop.run_in_executor(
+            None,
+            lambda: generation_model._generate_images(
+                prompt=full_prompt,
+                number_of_images=1,
+                negative_prompt="distorted walls, moved doors, changed camera angle, altered room geometry, shifted windows",
+                aspect_ratio=aspect_ratio,
+                person_generation="dont_allow",
+                safety_filter_level="",
+                reference_images=reference_images if reference_images else None,
+            )
+        )
+
+        generated_bytes = images[0]._image_bytes
+
+        # Resize output to match the original image dimensions
+        if orig_width > 0 and orig_height > 0:
+            with Image.open(io.BytesIO(generated_bytes)) as gen_img:
+                if gen_img.size != (orig_width, orig_height):
+                    logger.info(f"Resizing generated image from {gen_img.size} to ({orig_width}, {orig_height})")
+                    gen_img = gen_img.resize((orig_width, orig_height), Image.Resampling.LANCZOS)
+                buffer = io.BytesIO()
+                gen_img.save(buffer, format="JPEG")
+                generated_bytes = buffer.getvalue()
+
+        return generated_bytes
+
+    except Exception as e:
+        logger.error(f"Error generating image: {str(e)}")
+        raise
+
+async def generate_image(prompt: str, original_image_url: str | None = None, fix_white_balance: bool = False, reference_image_url: str | None = None) -> bytes:
+    return await generate_image_vertex(prompt, original_image_url, fix_white_balance, reference_image_url)
