@@ -20,7 +20,7 @@ class S3StorageService:
             )
         else:
             # Use explicit credentials (for local MinIO)
-            protocol = "https" if settings.STORAGE_USE_SSL else "http"
+            protocol = self.get_protocol()
             endpoint_url = f"{protocol}://{settings.STORAGE_ENDPOINT}"
             self.client = boto3.client(
                 's3',
@@ -43,9 +43,12 @@ class S3StorageService:
 
     async def delete_file(self, bucket: str, object_name: str):
         self.client.delete_object(Bucket=bucket, Key=object_name)
+        
+    def get_protocol(self):
+        return "https" if settings.STORAGE_USE_SSL else "http"
 
     def get_url(self, bucket: str, object_name: str):
-        return f"http://{settings.STORAGE_PUBLIC_ENDPOINT}/{bucket}/{object_name}"
+        return f"{self.get_protocol()}://{settings.STORAGE_PUBLIC_ENDPOINT}/{bucket}/{object_name}"
 
     def get_object_data(self, bucket: str, object_name: str) -> bytes:
         """Retrieves object data from S3."""
@@ -101,11 +104,14 @@ class MinioStorageService:
 
     async def delete_file(self, bucket: str, object_name: str):
         self.client.remove_object(bucket, object_name)
+        
+    def get_protocol(self):
+        return "http"
 
     def get_url(self, bucket: str, object_name: str):
         # For local development with MinIO in Docker, we might need to handle external vs internal URLs
         # For now, returning a direct URL. In production, this would be a signed URL or CDN URL.
-        return f"http://{settings.STORAGE_PUBLIC_ENDPOINT}/{bucket}/{object_name}"
+        return f"{self.get_protocol()}://{settings.STORAGE_PUBLIC_ENDPOINT}/{bucket}/{object_name}"
 
     def get_object_data(self, bucket: str, object_name: str) -> bytes:
         """

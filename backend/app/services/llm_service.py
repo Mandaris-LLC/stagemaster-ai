@@ -26,9 +26,10 @@ async def _fetch_and_encode_image(image_url: str) -> tuple[str, str, int, int]:
     """
     # Fetch image content
     image_content = None
-    
-    internal_prefix = f"http://{settings.STORAGE_ENDPOINT}/"
-    public_prefix = f"http://{settings.STORAGE_PUBLIC_ENDPOINT}/"
+    from app.services.storage import storage_service
+
+    internal_prefix = f"{storage_service.get_protocol()}://{settings.STORAGE_ENDPOINT}/"
+    public_prefix = f"{storage_service.get_protocol()}://{settings.STORAGE_PUBLIC_ENDPOINT}/"
     
     target_prefix = None
     if image_url.startswith(internal_prefix):
@@ -37,7 +38,6 @@ async def _fetch_and_encode_image(image_url: str) -> tuple[str, str, int, int]:
         target_prefix = public_prefix
         
     if target_prefix:
-        from app.services.storage import storage_service
         path_parts = image_url.replace(target_prefix, "").split("/", 1)
         if len(path_parts) == 2:
             bucket, object_name = path_parts
