@@ -1,13 +1,13 @@
 services:
   frontend:
     ports:
-      - "5173:5173"
+      - "5173:3000"
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api/v1}
     container_name: stage-frontend
-    environment:
-      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api/v1}
 
   db:
     profiles: ["local"]
