@@ -3,6 +3,9 @@ import logging
 import asyncio
 import base64
 import httpx
+from typing import cast
+from litellm import ModelResponse
+from litellm.types.utils import Choices
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -76,7 +79,7 @@ async def _fetch_and_encode_image(image_url: str) -> tuple[str, str, int, int]:
         image_base64 = base64.b64encode(image_content).decode('utf-8')
         return "image/jpeg", image_base64, 0, 0
 
-async def analyze_room(image_url: str, reference_image_url: str = None, reference_analysis: str = None) -> str:
+async def analyze_room(image_url: str, reference_image_url: str | None = None, reference_analysis: str | None = None) -> str:
     """
     Analyzes room layout, surfaces, and depth using LiteLLM/OpenRouter.
     Returns a text description of the room analysis.
@@ -158,12 +161,15 @@ async def analyze_room(image_url: str, reference_image_url: str = None, referenc
                 {"type": "image_url", "image_url": {"url": f"data:{ref_media_type};base64,{ref_image_base64}"}}
             )
 
-        response = await litellm.acompletion(
+        response = cast(ModelResponse, await litellm.acompletion(
             model=settings.LITELLM_ANALYSIS_MODEL,
             messages=messages,
             api_key=settings.OPENROUTER_API_KEY
-        )
-        return response.choices[0].message.content
+        ))
+
+        content = cast(Choices, response.choices[0]).message.content
+        assert content is not None
+        return content
     except Exception as e:
         logger.error(f"Error calling LiteLLM for room analysis: {str(e)}")
         raise
@@ -178,9 +184,9 @@ async def plan_furniture_placement(
     style_preset: str, 
     wall_decorations: bool = True, 
     include_tv: bool = False,
-    target_image_url: str = None,
-    reference_image_url: str = None,
-    reference_plan: str = None
+    target_image_url: str | None= None,
+    reference_image_url: str | None = None,
+    reference_plan: str | None = None
 ) -> str:
     """
     Generates a furniture placement plan based on room analysis.
@@ -276,12 +282,14 @@ async def plan_furniture_placement(
                 "image_url": {"url": f"data:{ref_media_type};base64,{ref_image_base64}"}
             })
 
-        response = await litellm.acompletion(
+        response = cast(ModelResponse, await litellm.acompletion(
             model=settings.LITELLM_ANALYSIS_MODEL,
             messages=messages,
             api_key=settings.OPENROUTER_API_KEY
-        )
-        return response.choices[0].message.content
+        ))
+        content = cast(Choices, response.choices[0]).message.content
+        assert content is not None
+        return content
     except Exception as e:
         logger.error(f"Error calling LiteLLM for furniture placement: {str(e)}")
         raise
@@ -294,8 +302,8 @@ async def generate_staged_image_prompt(
     fix_white_balance: bool = False,
     wall_decorations: bool = True,
     include_tv: bool = False,
-    reference_image_url: str = None,
-    reference_plan: str = None
+    reference_image_url: str | None = None,
+    reference_plan: str | None = None
 ) -> str:
     """
     Generates a highly detailed prompt for the image generation model (e.g., Stable Diffusion or DALL-E)
@@ -402,17 +410,19 @@ async def generate_staged_image_prompt(
                 "image_url": {"url": f"data:{ref_media_type};base64,{ref_image_base64}"}
             })
 
-        response = await litellm.acompletion(
+        response = cast(ModelResponse, await litellm.acompletion(
             model=settings.LITELLM_ANALYSIS_MODEL,
             messages=messages,
             api_key=settings.OPENROUTER_API_KEY
-        )
-        return response.choices[0].message.content
+        ))
+        content = cast(Choices, response.choices[0]).message.content
+        assert content is not None
+        return content
     except Exception as e:
         logger.error(f"Error calling LiteLLM for generation prompt: {str(e)}")
         raise
 
-async def generate_image(prompt: str, original_image_url: str = None, fix_white_balance: bool = False, reference_image_url: str = None) -> bytes:
+async def generate_image(prompt: str, original_image_url: str | None = None, fix_white_balance: bool = False, reference_image_url: str | None = None) -> bytes:
     """
     Generates an image using the configured image generation model.
     Returns the raw binary content of the generated image.
