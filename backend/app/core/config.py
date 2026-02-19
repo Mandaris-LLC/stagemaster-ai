@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     OPENROUTER_API_KEY: str = ""
     LITELLM_ANALYSIS_MODEL: str = "openrouter/google/gemini-2.0-flash-exp:free"
     LITELLM_GENERATION_MODEL: str = "openrouter/google/gemini-2.0-flash-exp:free"
+
+    GOOGLE_CLOUD_PROJECT: str = ""
+    GOOGLE_CLOUD_LOCATION: str = "us-central1"
+    VERTEX_IMAGEN_MODEL: str = "imagen-3.0-capability-001"
+    GOOGLE_SERVICE_ACCOUNT_JSON: str = ""  # Full service account JSON string (alternative to GOOGLE_APPLICATION_CREDENTIALS file)
     
     DEFAULT_USER_ID: str = "d7e45013-a883-4f63-8534-e1136093ba7a"
     

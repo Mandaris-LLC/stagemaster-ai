@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.base import get_db
 from app.models.job import Job
@@ -8,6 +9,41 @@ from app.services.worker import queue_staging_job
 import uuid
 
 router = APIRouter()
+
+_TEST_PROMPT = (
+    "Edit this room photograph by rendering the following furniture into the existing space "
+    "WITHOUT altering the room's architecture, camera angle, wall positions, door locations, "
+    "window placements, or any structural element. In the foreground, place a low-profile "
+    "3-seater sofa upholstered in a light-grey woven fabric with slim black metal legs against "
+    "the right wall, facing the closet. In the center, position a set of round nested coffee "
+    "tables with black metal frames and white marble tops atop a 5'x8' monochrome geometric "
+    "low-pile rug that leaves the honey-toned oak floor visible at the edges. Against the back "
+    "wall, to the right of the existing window, place a low-slung modern TV console in light oak "
+    "with white slatted doors, ensuring its height remains below the window sill and the "
+    "electrical outlets remain accessible. On the back wall to the left of the window, mount a "
+    "large 36\"x48\" framed abstract canvas featuring sage and gold tones. In the far back-left "
+    "corner, place a 4ft Fiddle Leaf Fig in a white ceramic pot, ensuring it does not obscure "
+    "the HVAC vent or window trim. Leaning against the narrow right wall closest to the camera, "
+    "add a tall black-framed arched floor mirror. A slim black floor lamp stands behind the sofa "
+    "near the lower-right outlet. All furniture must cast soft, realistic shadows toward the "
+    "bottom right, matching the existing warm artificial light from the central bronze flush-mount "
+    "fixture and the diffused natural light from the window. Render with 8K resolution, high-end "
+    "architectural photography detail, ray-traced reflections on the marble and wood grain, and "
+    "perfect perspective matching the wide-angle elevated lens. The room's walls, doors, windows, "
+    "ceiling, floor, and all fixtures must remain at their exact original pixel positions."
+)
+
+_TEST_IMAGE_URL = "https://stagemaster-uploads.s3.us-east-1.amazonaws.com/04b40cb0-9bbe-4beb-a9bd-89235145d186.jpg"
+
+@router.get("/test-generate")
+async def test_generate():
+    """Test endpoint: calls generate_image directly with a hardcoded prompt and image URL."""
+    from app.services.llm_service import generate_image
+    image_bytes = await generate_image(
+        prompt=_TEST_PROMPT,
+        original_image_url=_TEST_IMAGE_URL,
+    )
+    return Response(content=image_bytes, media_type="image/jpeg")
 
 @router.post("/", response_model=JobRead)
 async def create_job(

@@ -102,6 +102,7 @@ services:
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
       - LITELLM_ANALYSIS_MODEL=${LITELLM_ANALYSIS_MODEL:-openrouter/google/gemini-2.0-flash-exp:free}
       - LITELLM_GENERATION_MODEL=${LITELLM_GENERATION_MODEL:-openrouter/google/gemini-2.0-flash-exp:free}
+      - GOOGLE_SERVICE_ACCOUNT_JSON=${GOOGLE_SERVICE_ACCOUNT_JSON:-}
 
 volumes:
   postgres_data:

@@ -17,3 +17,4 @@ litellm>=1.30.0
 Pillow>=10.2.0
 minio
 debugpy
+google-cloud-aiplatform==1.74.0

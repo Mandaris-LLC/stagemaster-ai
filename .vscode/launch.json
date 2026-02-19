@@ -18,7 +18,8 @@
       "cwd": "${workspaceFolder}/backend",
       "envFile": "${workspaceFolder}/.env",
       "env": {
-        "DATABASE_URL": "postgresql+asyncpg://postgres:postgres@localhost:5432/stage_db"
+        "DATABASE_URL": "postgresql+asyncpg://postgres:postgres@localhost:5432/stage_db",
+        "STORAGE_ENDPOINT": "localhost:9000",
       },
       "jinja": true,
       "justMyCode": false
