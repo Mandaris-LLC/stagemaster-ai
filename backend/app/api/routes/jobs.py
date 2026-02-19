@@ -38,7 +38,7 @@ _TEST_IMAGE_URL = "https://stagemaster-uploads.s3.us-east-1.amazonaws.com/04b40c
 @router.get("/test-generate")
 async def test_generate():
     """Test endpoint: calls generate_image directly with a hardcoded prompt and image URL."""
-    from app.services.llm_service import generate_image
+    from app.services.image_service import generate_image
     image_bytes = await generate_image(
         prompt=_TEST_PROMPT,
         original_image_url=_TEST_IMAGE_URL,
@@ -61,6 +61,7 @@ async def create_job(
         image_id=job_in.image_id,
         room_type=job_in.room_type,
         style_preset=job_in.style_preset,
+        model=job_in.model,
         fix_white_balance=job_in.fix_white_balance,
         wall_decorations=job_in.wall_decorations,
         include_tv=job_in.include_tv,

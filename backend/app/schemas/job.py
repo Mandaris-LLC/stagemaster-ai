@@ -7,6 +7,7 @@ class JobBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     room_type: str
     style_preset: str
+    model: str = "v2"  # v1 = openrouter, v2 = vertexai
     fix_white_balance: bool = False
     wall_decorations: bool = True
     include_tv: bool = False

@@ -24,6 +24,7 @@ export const createStagingJob = async (imageId, roomType, stylePreset, options =
         image_id: imageId,
         room_type: roomType,
         style_preset: stylePreset,
+        model: options.model ?? 'v2',
         fix_white_balance: options.fixWhiteBalance ?? false,
         wall_decorations: options.wallDecorations ?? true,
         include_tv: options.includeTV ?? false,

@@ -36,6 +36,7 @@ async def startup():
                     await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS analysis TEXT"))
                     await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS placement_plan TEXT"))
                     await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS generation_prompt TEXT"))
+                    await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS model VARCHAR DEFAULT 'v2'"))
                 except Exception as e:
                     print(f"Migration error (already exists?): {e}")
             

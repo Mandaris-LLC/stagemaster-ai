@@ -11,7 +11,8 @@ logger = logging.getLogger(__name__)
 
 from sqlalchemy import select
 from app.models.image import Image
-from app.services.llm_service import analyze_room, plan_furniture_placement, generate_staged_image_prompt, generate_image
+from app.services.llm_service import analyze_room, plan_furniture_placement, generate_staged_image_prompt
+from app.services.image_service import generate_image
 from app.services.storage import storage_service
 
 async def _process_staging_job_async(job_id: str):
@@ -135,7 +136,8 @@ async def _process_staging_job_async(job_id: str):
                 generation_prompt,
                 db_image.original_url,
                 fix_white_balance=db_job.fix_white_balance,
-                reference_image_url=reference_image_url
+                reference_image_url=reference_image_url,
+                model=db_job.model or "v2"
             )
             # image_data is now bytes (decoded from base64 or downloaded)
                 

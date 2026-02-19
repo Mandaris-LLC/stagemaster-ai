@@ -17,6 +17,7 @@ class Job(Base):
 
     image = relationship("Image", back_populates="jobs")
     style_preset = Column(String, nullable=False)
+    model = Column(String, default="v2")  # v1 = openrouter, v2 = vertexai
     fix_white_balance = Column(Boolean, default=False)
     wall_decorations = Column(Boolean, default=True)
     include_tv = Column(Boolean, default=False)

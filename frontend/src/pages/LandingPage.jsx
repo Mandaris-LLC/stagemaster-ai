@@ -13,6 +13,7 @@ const LandingPage = () => {
     const [file, setFile] = useState(null);
     const [roomType, setRoomType] = useState('living_room');
     const [style, setStyle] = useState('modern');
+    const [model, setModel] = useState('v2');
     const [fixWhiteBalance, setFixWhiteBalance] = useState(false);
     const [wallDecorations, setWallDecorations] = useState(true);
     const [includeTV, setIncludeTV] = useState(false);
@@ -27,6 +28,7 @@ const LandingPage = () => {
         try {
             const imageData = await uploadImage(file);
             const jobData = await createStagingJob(imageData.id, roomType, style, {
+                model,
                 fixWhiteBalance,
                 wallDecorations,
                 includeTV: !isTVDisabled && includeTV
@@ -113,6 +115,35 @@ const LandingPage = () => {
                                 </div>
                             </div>
 
+                            {/* Rendering Engine */}
+                            <div className="pt-4 border-t border-outline-variant">
+                                <h4 className="text-sm font-bold text-on-surface-variant uppercase tracking-wider mb-4">Rendering Engine</h4>
+                                <div className="flex gap-3">
+                                    {[
+                                        { id: 'v2', label: 'Vertex AI', description: 'Google Imagen 3' },
+                                        { id: 'v1', label: 'OpenRouter', description: 'Gemini Flash 2.5 Pro' },
+                                    ].map((opt) => (
+                                        <button
+                                            key={opt.id}
+                                            onClick={() => setModel(opt.id)}
+                                            className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left ${
+                                                model === opt.id
+                                                    ? 'border-accent bg-accent-50 text-accent-700'
+                                                    : 'border-outline-variant bg-surface hover:border-accent-400 text-primary'
+                                            }`}
+                                        >
+                                            <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
+                                                model === opt.id ? 'bg-accent text-white' : 'bg-surface-container text-on-surface-muted'
+                                            }`}>{opt.id}</span>
+                                            <div>
+                                                <p className="text-sm font-semibold leading-tight">{opt.label}</p>
+                                                <p className="text-xs text-on-surface-variant">{opt.description}</p>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
                             {/* Additional Options */}
                             <div className="pt-4 border-t border-outline-variant">
                                 <h4 className="text-sm font-bold text-on-surface-variant uppercase tracking-wider mb-4">Enhancements</h4>
@@ -183,7 +214,7 @@ const LandingPage = () => {
                                     : `Staging your ${roomType.replace('_', ' ')} in ${style} style.`}
                             </p>
                         </div>
-                        
+
                         <button
                             onClick={() => {
                                 if (!file) {

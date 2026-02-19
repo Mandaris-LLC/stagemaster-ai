@@ -36,6 +36,7 @@ const RoomDetail = () => {
     // Staging Options State
     const [selectedImage, setSelectedImage] = useState(null);
     const [style, setStyle] = useState('modern');
+    const [model, setModel] = useState('v2');
     const [fixWhiteBalance, setFixWhiteBalance] = useState(false);
     const [wallDecorations, setWallDecorations] = useState(true);
     const [includeTV, setIncludeTV] = useState(false);
@@ -96,6 +97,7 @@ const RoomDetail = () => {
             if (referenceImage && referenceImage.latest_settings) {
                 const s = referenceImage.latest_settings;
                 setStyle(s.style_preset || 'modern');
+                setModel(s.model || 'v2');
                 setFixWhiteBalance(s.fix_white_balance || false);
                 setWallDecorations(s.wall_decorations !== undefined ? s.wall_decorations : true);
                 setIncludeTV(s.include_tv || false);
@@ -104,6 +106,7 @@ const RoomDetail = () => {
             // If it IS the reference image, use its own latest settings as default
             const s = image.latest_settings;
             setStyle(s.style_preset || 'modern');
+            setModel(s.model || 'v2');
             setFixWhiteBalance(s.fix_white_balance || false);
             setWallDecorations(s.wall_decorations !== undefined ? s.wall_decorations : true);
             setIncludeTV(s.include_tv || false);
@@ -117,6 +120,7 @@ const RoomDetail = () => {
         try {
             const job = await createStagingJob(selectedImage.id, room.room_type, style, {
                 roomId: roomId,
+                model,
                 fixWhiteBalance,
                 wallDecorations,
                 includeTV
@@ -436,6 +440,28 @@ const RoomDetail = () => {
                                     <div className="space-y-8">
                                         <div className="aspect-video rounded-2xl overflow-hidden shadow-elevation-2 border border-outline-variant">
                                             <img src={selectedImage.original_url} alt="To stage" className="w-full h-full object-cover" />
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <h4 className="text-sm font-bold text-on-surface-variant uppercase tracking-wider">Rendering Engine</h4>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {[
+                                                    { id: 'v2', label: 'Vertex AI', description: 'Google Imagen' },
+                                                    { id: 'v1', label: 'OpenRouter', description: 'Gemini Flash' },
+                                                ].map((opt) => (
+                                                    <button
+                                                        key={opt.id}
+                                                        onClick={() => setModel(opt.id)}
+                                                        className={`flex flex-col items-start px-4 py-3 rounded-xl border-2 transition-all text-left ${model === opt.id
+                                                                ? 'border-accent bg-accent-50 text-accent-700'
+                                                                : 'border-outline-variant bg-surface hover:border-accent-400 text-primary'
+                                                            }`}
+                                                    >
+                                                        <span className="text-sm font-semibold">{opt.label}</span>
+                                                        <span className="text-xs text-on-surface-variant">{opt.description}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
 
                                         <div className="space-y-4">
