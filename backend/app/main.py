@@ -1,10 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from app.api.routes import images, jobs, properties
 from app.models import Base
 from app.models.base import engine
 
 app = FastAPI(title="StageMasterAI API")
+
+# Trust X-Forwarded-Proto/X-Forwarded-For from the load balancer
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
 # Configure CORS
 app.add_middleware(
